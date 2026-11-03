@@ -1,9 +1,10 @@
 # Testing Plan
 **ResortOS AI — Restaurant Booking App**
 
-Both repositories use **Playwright** (`@playwright/test`) as the single test runner. Each repo has one tool and one command: `npm test`.
+Both repositories use **Playwright** (`@playwright/test`) for behaviour tests. The backend also has a **Jest** suite (added 2026-11-03 at the owner's request) that enforces **100% statement, branch, function and line coverage** of `src/`. `npm test` runs everything in each repo.
 
 ## 1. Functional Testing
+* **Coverage (backend, Jest):** supertest against the Express app plus direct unit tests of helpers and middleware, on an in-memory PGlite. The 100% threshold fails the run if any line or branch goes untested. Unreachable defensive code is removed, not ignored.
 * **Unit Testing:** Tests pure functions at the code level, such as 2.5-hour slot computation, table count calculation (⌈party ÷ 2⌉ for Main Hall, 1–4 rooms for VIP Wing), and table selection.
 * **API Testing (backend repo):** Calls the real Express API against a test PostgreSQL database. Covers:
   * The full CRUD cycle: create → read → reschedule → soft-cancel.

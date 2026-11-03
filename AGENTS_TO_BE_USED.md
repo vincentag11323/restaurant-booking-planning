@@ -46,7 +46,7 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
   * Backend: `tests/unit/*.spec.ts` (pure slot/allocation logic) → `tests/api/*.spec.ts` (real API + test DB).
   * Frontend: `tests/e2e/*.spec.ts` with the API mocked via `page.route`.
 * **Trigger:** Every behaviour change.
-* **Boundaries:** Write the failing test first and commit with the implementation. Tests assert exact status codes + `message` strings from `api_spec.md`. Don't weaken or delete a test to make it pass. Don't add a second test framework.
+* **Boundaries:** Write the failing test first and commit with the implementation. Tests assert exact status codes + `message` strings from `api_spec.md`. Don't weaken or delete a test to make it pass. Frameworks: Playwright for behaviour in both repos; Jest (backend only, owner request 2026-11-03) keeps `src/` at 100% coverage. Never lower the threshold or add coverage-ignore comments; remove unreachable code instead.
 
 ### 3.4 code-simplify — *Phase 3*
 * **Purpose:** Enforce KISS after green: remove dead code, needless abstractions and duplication without changing behaviour.
