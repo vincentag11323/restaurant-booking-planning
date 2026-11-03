@@ -529,7 +529,7 @@ Lessons about how to work with this user and project.
 
 **Why:**
 - Jest runs tests in alphabetical file order (or random with --randomize)
-- Adding AGENT_CAPABILITIES.md (before test files alphabetically) or test file changes order
+- Adding tests/jest/agent.test.ts changed which Jest file ran before the auth tests
 - Failed-login alert de-duplication bug surfaced when test order changed
 - The failed-login alert de-duplication counted every SECURITY_ALERT from the IP (including bulk-export alerts from the admin tests), so a new test order suppressed it. The test data was fine; the query was too broad
 - The bug existed all along; test order just made it visible
