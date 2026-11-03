@@ -68,6 +68,7 @@ It does **not** keep any booking data. Every reservation, sitting and menu reque
 * Show API `message` strings as-is in error banners. They are written to be user-readable.
 * Disable submit buttons while a request is in flight.
 * Display times in restaurant local time (`UTC+07:00`), e.g. "Sat 24 Dec, 19:30 – 22:00".
+* Prices read `Rp 320.000` (space, dot thousands) on every browser. Built-in currency formatting differs between engines (Safari writes `Rp320.000`), so the app formats prices itself (found by the WebKit e2e run).
 * Accessible: labelled inputs, keyboard-reachable drawer/modals, sufficient contrast.
 
 ## 5. Test Hooks
