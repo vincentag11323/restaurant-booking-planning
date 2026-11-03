@@ -12,8 +12,8 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 | Folder | Holds | Must not |
 |---|---|---|
 | `src/types/` | **All shared types**: `api.ts` mirrors the booking API's request and response shapes (`api_spec.md`), `chat.ts` the assistant's | Hold code that runs |
-| `src/backend-api/` | **All calls to the booking API.** `client.ts` is the one fetch wrapper (cookie, 401 handling, errors). One file per route group or resource (`auth.ts`, `users.ts`, `reservations.ts`, `menus.ts`, `availabilities.ts`, `admins.ts`) with one typed function per endpoint, e.g. `listMyReservations(): Promise<Reservation[]>` | Be skipped: pages never build API paths themselves |
-| `src/agent-api/` | All calls to the booking assistant (`/agent/chat`) | Share code with `backend-api` (no auth there) |
+| `src/backendApi/` | **All calls to the booking API.** `client.ts` is the one fetch wrapper (cookie, 401 handling, errors). One file per route group or resource (`auth.ts`, `users.ts`, `reservations.ts`, `menus.ts`, `availabilities.ts`, `admins.ts`) with one typed function per endpoint, e.g. `listMyReservations(): Promise<Reservation[]>` | Be skipped: pages never build API paths themselves |
+| `src/agentApi/` | All calls to the booking assistant (`/agent/chat`) | Share code with `backendApi` (no auth there) |
 | `src/auth/` | The session context (`GET /api/users/me` on load, sign-in, sign-out) | — |
 | `src/pages/` | One component per screen; `pages/admin/` for admin screens | Call `fetch` or write API paths |
 | `src/components/` | Reusable UI pieces (`Layout`, `Dialog`, buttons, banners) | Call the API |
@@ -23,7 +23,7 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 * Function components only, named `PascalCase`, one main component per file named like the file.
 * Props get an explicit `interface` or `type`.
 * Keep state as close as possible to where it's used; lift it only when two components need it. No global store for v1.
-* Data loading: call a `backend-api` function inside `useEffect` (or an event handler), handle the three states every time: loading, error (show `ErrorBanner` with the API's message), and data.
+* Data loading: call a `backendApi` function inside `useEffect` (or an event handler), handle the three states every time: loading, error (show `ErrorBanner` with the API's message), and data.
 * Lists need stable `key`s (ids, never array indexes for changing lists).
 * Follow the rules of hooks; dependency arrays are complete (no lint suppression).
 
@@ -46,10 +46,10 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 * Comments say **why**, not what. No commented-out code. KISS: no new library unless the spec needs it.
 
 ## 7. Testing
-* Test first. Playwright tests in `tests/e2e/` run against the mocked API (`tests/e2e/mock-api.ts`), phone viewport.
+* Test first. Playwright tests in `tests/e2e/` run against the mocked API (`tests/e2e/mockApi.ts`), phone viewport.
 * Find elements the way a user would: by role and visible text, not CSS classes.
 * Each test names its scenario ID from `test_scenarios_app.md`.
-* When an API path changes, change it in `src/backend-api/` and in `mock-api.ts`, nowhere else.
+* When an API path changes, change it in `src/backendApi/` and in `mockApi.ts`, nowhere else.
 
 ## 8. Git
 * Small local commits, Conventional Commits, tests committed before the code that makes them pass.

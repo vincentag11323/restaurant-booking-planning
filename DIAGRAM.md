@@ -10,8 +10,8 @@ flowchart LR
   admin(["Admin / host"]) -->|HTTPS| web
 
   subgraph web["resortos-booking-web (PWA, :5173)"]
-    ba["src/backend-api"]
-    aa["src/agent-api"]
+    ba["src/backendApi"]
+    aa["src/agentApi"]
   end
 
   ba -->|"/api/* JSON<br/>HttpOnly session cookie (1 h)"| api
