@@ -173,25 +173,46 @@ resortos-booking-agent/
 Viewing, changing or cancelling bookings · menu Q&A · payments · languages other than English · voice · saved chat history · real email/WhatsApp delivery · staff-facing assistant.
 
 ## 11. LLM Provider: Cent AI
-Checked 2026-11-03 against cent-ai.dev, cent-ai.dev/docs and the live API.
+Checked 2026-11-03 against cent-ai.dev/docs (`api/responses`, `api/messages`, `api/models`, `authentication`, `guides/chat-vs-responses`, `reference/rate-limits`) and the live API.
 
-| Item | Value |
-|---|---|
-| What it is | Prepaid API gateway to multiple models, OpenAI- and Anthropic-compatible |
-| OpenAI-compatible base URL | `https://api.cent-ai.dev/v1` (`POST /chat/completions`, `/models`, `/responses`) |
-| Anthropic-compatible base URL | `https://api.cent-ai.dev` (`POST /v1/messages`) |
-| Auth | `Authorization: Bearer <key>` (docs curl example); keys look like `cai_…`. Unauthenticated calls return `401 {"error":{"code":"invalid_api_key",...,"type":"authentication_error"}}` (OpenAI-style error body) |
-| Models | Depends on the pack (7, 20 or 26 models). Example IDs in the docs: `glm-5.3`, `claude-opus-5`. Full list via `GET /v1/models` with a key |
-| Cost | Per token (input, cache read, cache write, output); each response carries `usage.cost` in USD |
-| Not documented publicly | Tool/function calling, structured (JSON schema) output, streaming, rate limits |
+### 11.1 The two formats we can use
+| | **Messages** (Anthropic format) | **Responses** (OpenAI format) |
+|---|---|---|
+| Endpoint | `POST https://api.cent-ai.dev/v1/messages` | `POST https://api.cent-ai.dev/v1/responses` |
+| SDK base URL | `https://api.cent-ai.dev` | `https://api.cent-ai.dev/v1` |
+| Auth header | `x-api-key: cai_…` + `anthropic-version: 2023-06-01` | `Authorization: Bearer cai_…` |
+| Body | `model`, `messages`, **`max_tokens` (required)**, `system`, `tools`, `thinking`, `stream`, `cache_control` | `model`, `input`, `instructions`, `tools`, `reasoning`, `stream`, `store`, `previous_response_id` (extra params "sent to the model as is") |
+| Tool calls come back as | `content` blocks of type `tool_use`, `stop_reason: "tool_use"` | `output` items of type `function_call` |
+| Cost | `usage.cost` (stream: final `message_delta`) | `usage.cost` (stream: `response.completed`) |
+| Extras | `POST /v1/messages/count_tokens` (free) | `previous_response_id` works only if the model keeps state. **Cent AI stores no conversation state** |
+| Errors | Anthropic error shape | OpenAI error shape |
+| Docs example model | `claude-opus-5` | `gpt-6-sol` |
 
-**How the agent uses it:** Mastra → AI SDK `@ai-sdk/openai-compatible` provider with `baseURL = LLM_BASE_URL` (`https://api.cent-ai.dev/v1`), `apiKey = LLM_API_KEY`, model `LLM_MODEL`. The key lives only in `.env` (git-ignored). If the OpenAI route mishandles tool calls for Claude models, switch to `@ai-sdk/anthropic` with `baseURL = https://api.cent-ai.dev`, a config-only change.
+Cent AI's guide: "Pick the one your tool or code already speaks." Same host, same pricing.
 
-**Must verify before building** (one smoke script, a few cents of usage, once the key is provided):
-1. `GET /v1/models` lists the chosen model.
-2. A chat completion with one tool definition returns a proper `tool_calls` response. This is critical: the assistant can't work without tool calling.
-3. Structured output for the topic guard (`response_format` JSON schema). If unsupported, the guard asks for plain JSON and Zod validates it.
-4. Error shape and latency for a normal request.
+**Our choice:** decided by the model.
+* **Claude model → Messages** (`LLM_API_FORMAT=messages`): Anthropic's own format, so tool use is native. Mastra uses `@ai-sdk/anthropic` with `baseURL` set.
+* **GPT-style model → Responses** (`LLM_API_FORMAT=responses`): Mastra uses `@ai-sdk/openai`'s Responses model with `baseURL` set.
+* Either way the server stays **stateless**: full history each turn, `store: false`, no `previous_response_id`, since Cent AI doesn't keep state.
 
-**Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design already keeps guest email/phone out of prompts (§5.5). Billing is prepaid with no auto-renewal, so a drained balance makes the assistant fail. The agent maps that to a 502 "Assistant unavailable" and logs `usage.cost` per request so spend is visible.
+### 11.2 Specifying the model
+* Set `LLM_MODEL` in `.env` to an ID **exactly** as listed by `GET https://api.cent-ai.dev/v1/models` (Bearer auth). Unknown IDs return 404 "The model '…' does not exist or is not available."
+* Each model in that list has `capabilities`, `context_window`, `pricing` and `status`. **Choose one whose capabilities include tools**, with status `operational`.
+* The agent sends it as the `model` field on every request. Switching models is an `.env` change, plus `LLM_API_FORMAT` if the vendor family changes.
 
+### 11.3 Keys, limits, costs
+* Keys look like `cai_…` and are shown once at creation. Each key belongs to one project and can carry **daily/monthly spend limits, an IP allowlist and a model allowlist**. New keys have no limits, so set them.
+* Keep keys server-side only: the API allows cross-origin calls, so a browser-exposed key is public.
+* Rate limit: 600 requests/minute per key (`x-ratelimit-*` headers, `Retry-After`). 429 codes: `rate_limited`, `key_limit_exceeded`, `project_budget_exceeded`. The agent maps them to "Assistant is busy / unavailable, please try again".
+* Prepaid, no auto-renewal: an empty balance makes the assistant fail. The agent logs `usage.cost` per request.
+
+### 11.4 Where the key goes
+`resortos-booking-agent/.env` (git-ignored; template in `.env.example`): `LLM_API_FORMAT`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`.
+
+### 11.5 Smoke test before building (curl only, a few cents)
+1. `GET /v1/models` → confirm `LLM_MODEL` exists, is `operational` and lists tools.
+2. One request in the chosen format with a single tool → expect a `tool_use` / `function_call`.
+3. One plain request → check latency and `usage.cost`.
+4. Topic-guard output: JSON from the model validated by Zod, with no reliance on provider-specific structured-output flags.
+
+**Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design keeps guest email/phone out of prompts (§5.5).
