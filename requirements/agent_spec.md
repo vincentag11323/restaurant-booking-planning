@@ -320,11 +320,15 @@ Each option is a ready-to-confirm `BookingDraft`. The reply lists them as short 
 | F5 | Email already has 2 upcoming assistant bookings | API per-email cap | "This email already has 2 upcoming bookings. Sign in to manage them." | No |
 | F6 | Booking API down / 5xx / timeout | HTTP client | "The booking system isn't responding. Nothing was booked; please try again in a minute." (`502`) | **Never double-books** (F6a) |
 | F6a | Timeout on confirm: did it book? | Idempotency key | Retrying the same `confirmDraft` returns the **same** reservation instead of a second one | At most once |
-| F7 | LLM rate limited / timeout | `LlmError.retryable` | "The assistant is busy, please try again shortly." (`503` + `Retry-After`) | No |
+| F7 | LLM rate limited / timeout (**25 s per turn**, owner e2e finding 2026-11-03) | `LlmError.retryable`; the turn is aborted at 25 s | "The assistant is busy, please try again shortly." (`503` + `Retry-After`) | No |
 | F8 | LLM budget used up (`project_budget_exceeded`, `key_limit_exceeded`) | `LlmError.code` | "The assistant is unavailable right now. You can book in the app." (`503`), with a server warning | No |
 | F9 | Model returns broken tool arguments or loops | Zod on tool input; max **5** tool steps per turn | "Sorry, I didn't catch that. Could you rephrase?" | No |
 | F10 | Tampered or expired `confirmDraft` | Draft token (§13.3) | `400 Booking details changed or expired. Please ask again.` | No |
 | F11 | Off-topic question | `notSupportedYet` tool | Fixed refusal | No |
+
+**Replies decided by code (e2e finding, 2026-11-03):** when `proposeBooking` refuses (any F2 rule or an F5 per-email limit), the guest gets that refusal text exactly. The model loop stops after `proposeBooking` either way, so a model-written explanation would never arrive.
+
+**Per-turn log line (no message content):** `turn tools=<names> steps=<n> ms=<duration> status=<code>`, so slow or looping turns can be diagnosed.
 
 ### 13.3 Draft token (read-back = what gets booked)
 `proposeBooking` returns the draft plus `draftToken = HMAC-SHA256(draft fields + email + expiry, AGENT_DRAFT_SECRET)`, valid for **15 minutes**. `confirmDraft` must carry the same token, so the guest books exactly what was read back. The token doubles as the **idempotency key** sent to the API (`Idempotency-Key` header, stored unique on the reservation), which is what makes F6a safe.
