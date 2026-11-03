@@ -135,12 +135,36 @@ Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`.
 | GET | `/health` | `200 { status: "ok" }` |
 | * | unknown route | `404 { message: "Route not found" }` |
 
-## 8. Failure logging
-Every failed request (any `4xx` or `5xx` response, including unknown routes and rate limits) is:
-* written as one JSON line to **`logs/errors.log`** (`ERROR_LOG_PATH`): `{ time, status, method, path, message, userId?, ip }`. No request bodies, passwords, tokens or guest messages. `5xx` lines also carry the error name and stack;
-* printed with `console.error`.
+## 8. Logging: one success log, one error log
+**Owner request 2026-11-04.** Two files, both JSON lines, both rotated the same way.
+
+**Tag:** every line, in the file and on the console, starts with the request's HTTP method in brackets: `[POST]`, `[PATCH]` (this API updates with PATCH, there is no PUT), `[DELETE]`, and `[GET]` for failed reads.
+
+### 8.1 Success log: `logs/app.log` (`APP_LOG_PATH`)
+Every request that **creates, updates or deletes database rows** and succeeds writes one line and prints it with `console.log`:
+`[POST] {"time","status","method","path","action","resourceId?","userId?","ip"}`
+
+| Request | `action` | `resourceId` |
+|---|---|---|
+| `POST /auth/register` | `USER_CREATED` + `SESSION_CREATED` (one line each) | user id / session id |
+| `POST /auth/login` | `SESSION_CREATED` (and `SESSIONS_EXPIRED_DELETED` with a count when old rows were removed) | session id |
+| `POST /auth/logout` (with a live session) | `SESSION_DELETED` | session id |
+| `PATCH /me` | `PROFILE_UPDATED` | user id |
+| `POST /reservations` | `RESERVATION_CREATED` | reservation code |
+| `PATCH /reservations/:id` | `RESERVATION_RESCHEDULED` | reservation code |
+| `DELETE /reservations/:id` | `RESERVATION_CANCELLED` | reservation code |
+| `POST /agent/reservations` | `RESERVATION_CREATED` (plus `GUEST_ACCOUNT_CREATED` when the email was new) | reservation code / user id |
+
+Reads (GET) and requests that change nothing (e.g. logout without a session, an idempotent agent retry) write no success line. Audit-log rows written alongside a change are not logged separately.
+
+### 8.2 Error log: `logs/errors.log` (`ERROR_LOG_PATH`)
+Every failed request (any `4xx` or `5xx` response, including unknown routes and rate limits) writes one line and prints it with `console.error`:
+`[POST] {"time","status","method","path","message","userId?","ip"}`. `5xx` lines also carry the error name and stack.
 
 **Owner decision (2026-11-03):** the 401 from the session check on page load (`GET /me` with a missing or expired session cookie) stays logged: there is no valid session, so it counts as a failure.
 
-**Rotation:** before writing, if the file is over **5 MB** (`ERROR_LOG_MAX_BYTES`), it's renamed `errors.log.1` (older copies shift to `.2`, `.3`; the 4th is deleted), so at most **3** old files are kept. Tests point `ERROR_LOG_PATH` at a temp file and can silence the console (`ERROR_LOG_CONSOLE=false`).
+### 8.3 What is never logged
+Request bodies, passwords, session tokens or cookies, API keys, query strings, names, emails, phone numbers, allergies, guest messages.
 
+### 8.4 Rotation (both files)
+Before writing, if the file is over **5 MB** (`APP_LOG_MAX_BYTES` / `ERROR_LOG_MAX_BYTES`), it's renamed to `.1` (e.g. `app.log.1`) and the previous `.1` is **deleted**. So each log has **one** live file and at most **one** old copy, and disk use stays under about 10 MB per log. Tests point the paths at temp files and can silence the console (`APP_LOG_CONSOLE=false`, `ERROR_LOG_CONSOLE=false`).

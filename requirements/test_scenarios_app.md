@@ -92,13 +92,14 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | S6 | Audit log edited or deleted | Refused by the database | JEST domain | ✅ |
 | S7 | Malformed JSON, unknown route, security headers | JSON 400/404, `nosniff`, no `x-powered-by` | API platform | ✅ |
 | S8 | Production mode | Secure cookie, trusts one proxy | JEST environment | ✅ |
-| S9 | Any failed request (4xx/5xx) | One JSON line in `logs/errors.log` + `console.error`; no bodies or secrets | JEST, E2E | ⬜ new |
+| S9 | Any failed request (4xx/5xx) | One `[METHOD]`-tagged JSON line in `logs/errors.log` + `console.error`; no bodies or secrets | JEST, E2E | ⬜ new |
+| S16 | Every successful create / update / delete (table in api_spec §8.1) | One `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` + `console.log`, with the `action`; nothing for GETs; no personal data or secrets | JEST | ⬜ new |
 | S11 | Guest or admin cookie on `/agent/*` | `403 Forbidden` | API agent, JEST | ⬜ new |
 | S12 | Assistant key on public routes (`/menu`, `/availability`, `/auth/login`) | `403 Forbidden` | API agent, JEST | ⬜ new |
 | S13 | Old or forged cookie on a public route (`/auth/login`, `/menu`) | Ignored: sign-in and menu work | JEST | ⬜ new |
 | S14 | A key in `ApiKey` whose owner isn't `AGENT` | `401 Invalid API key` | JEST | ⬜ new |
 | S15 | User row removed while signed in | `401` on every route (sessions and key deleted with the user) | JEST | ⬜ new |
-| S10 | `errors.log` over 5 MB | Rotated to `.1`, older to `.2`/`.3`, at most 3 kept | JEST | ⬜ new |
+| S10 | `app.log` or `errors.log` over 5 MB | Renamed to `.1`, the previous `.1` deleted: one live file + one old copy per log | JEST | ⬜ new |
 
 ## 7. Mobile and PWA
 | # | Scenario | Expected | Covered by | Status |

@@ -137,6 +137,6 @@ sequenceDiagram
 * One auth middleware on every request works out `{ userId, role }`; `/agent/*` is for the assistant only, every other route for guests and admins only.
 * **PWA:** installable, works offline for the app shell only; booking data is always live.
 * Mobile-only layout; English only; prices shown as `Rp 320.000` on every browser.
-* **Failure log:** every 4xx/5xx is one JSON line in `logs/errors.log` (no bodies, passwords or query strings), rotated at 5 MB, 3 old files kept.
+* **Logs:** every successful create/update/delete is one `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` (+ `console.log`); every 4xx/5xx is one tagged line in `logs/errors.log` (+ `console.error`). No bodies, secrets or personal data. Each file rotates at 5 MB, keeping one old copy.
 * **Audit log** is append-only, enforced by a database trigger.
 * Dev and tests run on **PGlite** (embedded Postgres); race tests and production use **real PostgreSQL** (`npm run test:pg`).
