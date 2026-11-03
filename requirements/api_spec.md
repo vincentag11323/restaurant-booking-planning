@@ -122,5 +122,7 @@ Every failed request (any `4xx` or `5xx` response, including unknown routes and 
 * written as one JSON line to **`logs/errors.log`** (`ERROR_LOG_PATH`): `{ time, status, method, path, message, userId?, ip }`. No request bodies, passwords, tokens or guest messages. `5xx` lines also carry the error name and stack;
 * printed with `console.error`.
 
+**Owner decision (2026-11-03):** the 401 from the session check on page load (`POST /auth/refresh` with a missing or expired refresh cookie) stays logged: there is no valid session, so it counts as a failure.
+
 **Rotation:** before writing, if the file is over **5 MB** (`ERROR_LOG_MAX_BYTES`), it's renamed `errors.log.1` (older copies shift to `.2`, `.3`; the 4th is deleted), so at most **3** old files are kept. Tests point `ERROR_LOG_PATH` at a temp file and can silence the console (`ERROR_LOG_CONSOLE=false`).
 
