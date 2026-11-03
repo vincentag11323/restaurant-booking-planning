@@ -23,4 +23,3 @@ Read in this order. Every v1 code change must trace back to one of these docs (s
 
 ### Per-repo docs
 * `resortos-booking-api/README.md`, `resortos-booking-web/README.md` (+ `DESIGN.md`), `resortos-booking-agent/README.md` (+ `AGENT_CAPABILITIES.md`): setup, run, test.
-* `deployment.md`: post-v1 (hosting and CI/CD are out of scope for v1).
