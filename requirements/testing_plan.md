@@ -27,4 +27,5 @@ Both repositories use **Playwright** (`@playwright/test`) for behaviour tests. T
 
 ## 3. Performance Testing
 * **Concurrency Testing:** Fire many simultaneous bookings at the same slot and assert that no table is ever double-booked. A DB unique constraint on (table, slot) guarantees this.
-* **Load Testing:** Simulate peak dinner-time traffic (e.g. 500 concurrent users browsing slots and booking) with k6 or Artillery on staging. Target p95 API latency < 300 ms.
+* **Load Testing (local, now):** `npm run load` in `resortos-booking-e2e` (autocannon) hits the test API with availability reads, sign-ins and bookings, and reports requests/s, p95 latency and error count. Run it against real PostgreSQL for meaningful numbers.
+* **Load Testing (staging):** Simulate peak dinner-time traffic (e.g. 500 concurrent users browsing slots and booking) with k6 or Artillery on staging. Target p95 API latency < 300 ms.

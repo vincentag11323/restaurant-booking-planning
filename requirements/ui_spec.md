@@ -13,16 +13,22 @@ React 19 + Vite + Tailwind CSS 4 SPA, shipped as an installable **PWA**. **Mobil
 | `/bookings` | USER | **My Bookings** | Upcoming / Past tabs. Each card: code, slot, sector, tables, party size, status badge. Actions on upcoming `CONFIRMED` cards: **Reschedule** (modal: date + slot + party size) and **Cancel** (confirm dialog) |
 | `/menu` | public (recommendations need login) | Menu | type tabs (Seasonal Fine Dining / À La Carte), price, allergen chips. Logged in: a "Safe for you" section first |
 | `/profile` | USER | Profile | name, phone, allergy tag input, save |
+| `/chat` | public (anyone) | **Ask the assistant** | email (required) + phone (optional) once; conversation; reply bubbles; **Book it** button on a read-back; a button per alternative; booking card with the RSV code; one-line notice "Messages are processed by an AI service to make your booking" (D12); errors from the agent shown as-is (busy, limits) |
 | `/admin` | ADMIN | **Dashboard** | date picker, branch filter, 4 stat tiles (bookings, covers, cancellations, utilization per sector) |
 | `/admin/logs` | ADMIN | **Booking Log** | search box + collapsible filters (branch, sector, status, from/to), paginated **card list** (code, customer, sitting, room, party, status), **Export CSV / JSON**, tap a code → **Detail sheet** (customer, tables/rooms, created at, slot start → end, special requests) |
 
 Any route the role can't access redirects (USER → `/`, ADMIN → `/admin`, guest → `/login`). The admin UI has **no** edit, cancel or create controls.
 
 ## 2. State & Data
+* **Two API folders, one per service (separation of concerns):**
+  * `src/backend-api/`: everything that calls the booking API (`/api/...`): fetch wrapper with token refresh, auth.
+  * `src/agent-api/`: everything that calls the booking assistant (`/agent/...` → agent `POST /chat`). No auth; the guest's email goes in each request.
+  * Pages import from these folders only; no page calls `fetch` directly.
+* **Naming:** folders lowercase, kebab-case when multi-word; React components PascalCase; other files camelCase.
 * Fetch wrapper `api.ts`: attaches the access token and, on a `401`, calls `/auth/refresh` once and retries. If the refresh fails, it logs out.
 * Access token is kept in memory (React context). The refresh cookie restores the session on reload.
 * No global state library. Use React context for auth and local component state for everything else.
-* Dev: Vite proxies `/api` to `http://localhost:4000` (same-origin, so cookies just work). Prod: `VITE_API_URL`.
+* Dev: Vite proxies `/api` to `http://localhost:4000` and `/agent` to `http://localhost:4300` (both same-origin). Prod: `VITE_API_URL`, `VITE_AGENT_URL`.
 
 ## 3. PWA
 
