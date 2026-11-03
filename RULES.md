@@ -7,6 +7,15 @@ Owner rule, 2026-11-03. Details on skills and reviewers: `AGENTS_TO_BE_USED.md`.
 
 Every feature or change goes through four subagents **in order**. A stage starts only after the orchestrator has checked the previous stage's report (§3).
 
+Each stage follows its ECC step: **plan → tdd → code review → verify**.
+
+| # | ECC step | Skill / agent the stage loads |
+|---|---|---|
+| 1 | plan | `ecc:plan` workflow (restate requirements, risks, step-by-step plan), run by the `ecc:planner` agent |
+| 2 | tdd | `ecc:tdd-workflow` (red → green → refactor, coverage kept), with `mattpocock-skills:tdd` for vertical slices |
+| 3 | code review | `ecc:code-review` checklist, plus the reviewer agents below |
+| 4 | verify | `ecc:verification-loop` (build, typecheck, lint, tests, security scan, diff review), plus `ecc:security-review` for auth changes |
+
 | # | Stage | Agent / model | Does | Must not |
 |---|---|---|---|---|
 | 1 | **Plan** | `ecc:planner`, Opus | Reads the approved spec and the real code; returns a file-by-file plan: every file to change, every test to add or change (with the exact status code and message from the spec), the order of the work and the commit messages | Write or edit any file |
