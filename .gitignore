@@ -6,3 +6,11 @@ resortos-booking-agent/
 resortos-booking-e2e/
 # Obsidian app state
 obsidian-log/.obsidian/
+# Videos (test recordings)
+videos/
+*.mp4
+*.webm
+*.mov
+*.avi
+*.mkv
+*.m4v
