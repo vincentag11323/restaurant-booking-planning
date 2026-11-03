@@ -6,7 +6,9 @@ Base URL: `/api`. JSON in/out. Times are ISO-8601 UTC strings in responses. Date
 **Auth:** `Authorization: Bearer <accessToken>` (15 min). Refresh token is an `HttpOnly` cookie scoped to `/api/auth`.  
 **Errors:** always `{ "message": string }`, using 400 / 401 / 403 / 404 (see `PRD_BOOKING_v1.md` §4.2).
 
-Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN
+Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN · 🤖 AGENT (the AI booking assistant's service account)
+
+**RBAC:** routes check permissions (`src/lib/permissions.ts`). `AGENT` gets `403` on every route except §7; admins can't create bookings.
 
 ## 1. Auth
 | Method | Path | Access | Body | Success | Errors |
@@ -48,6 +50,7 @@ type Reservation = {
   slotStart: string; slotEnd: string; partySize: number;
   specialRequests: string | null;
   status: "CONFIRMED" | "SEATED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
+  source: "APP" | "AGENT";                // who booked: the guest in the app, or the AI assistant on their behalf
   tableIds: string[]; createdAt: string; updatedAt: string; cancelledAt: string | null;
 };
 ```
@@ -79,7 +82,7 @@ All require 🛡️ ADMIN. A `USER` token gets `403`. There are **no** POST/PATC
 | GET | `/admin/reservations/export` | filters + `?format=csv\|json` | `200` file download (`Content-Disposition: attachment`) |
 | GET | `/admin/reservations/:id` | — | `200 AdminReservation` or `404` |
 
-**Filters:** `branch?`, `sector?`, `status?`, `from?` / `to?` (local dates, inclusive), `q?` (matches reservation `code` exactly, or name / email / phone case-insensitive contains).
+**Filters:** `branch?`, `sector?`, `status?`, `source?` (`APP` | `AGENT`), `from?` / `to?` (local dates, inclusive), `q?` (matches reservation `code` exactly, or name / email / phone case-insensitive contains).
 
 ```ts
 type AdminReservation = Reservation & { customer: { name: string; email: string; phone: string | null } };
@@ -87,6 +90,7 @@ type AdminReservation = Reservation & { customer: { name: string; email: string;
 type Stats = {
   date: string;
   totalBookings: number;      // non-cancelled reservations with a slot on that date
+  agentBookings: number;      // of those, booked by the AI assistant
   totalCovers: number;        // sum of partySize of those
   cancellations: number;      // CANCELLED reservations with a slot on that date
   utilization: { sector: "MAIN_HALL" | "VIP_WING"; usedUnits: number; capacityUnits: number; rate: number }[];
@@ -95,6 +99,16 @@ type Stats = {
 ```
 
 Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`. Export → audit `EXPORT_RESERVATIONS` (`metadata.rows`), plus `SECURITY_ALERT` if rows > 1,000. Export is capped at 10,000 rows.
+
+## 7. Agent (AI booking assistant) 🤖
+| Method | Path | Input | Success | Errors |
+|---|---|---|---|---|
+| POST | `/agent/reservations` | `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp? }`, header `Idempotency-Key?` (8–200 chars) | `201 Reservation` (`source: "AGENT"`); same key again → `200` with the same booking | Same `400` messages as `POST /reservations`, plus `This email already has 2 upcoming assistant bookings. Sign in to manage them.`, `This email can't be booked through the assistant` (staff accounts), `Idempotency-Key was already used for another booking` |
+| POST | `/agent/guests/lookup` | `{ email }` (one exact email) | `200 { exists, upcomingAssistantBookings }` | `400` for anything but a single email; 60 requests/minute |
+
+* Booking finds or creates a **password-less guest account** for the email. `POST /auth/register` with that email **claims** it (sets the password) and keeps its bookings; a password-less account can't log in (`401 Invalid email or password`, same as a wrong password).
+* Audit: `CREATE_RESERVATION` (actor = assistant, `metadata: { source, onBehalfOf, clientIp }`), `VIEW_GUEST` for every lookup.
+* Export adds a `source` column.
 
 ## 6. Misc
 | Method | Path | Success |
