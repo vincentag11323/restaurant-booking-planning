@@ -1,9 +1,9 @@
 # Booking Assistant (AI Agent) Specification
 **ResortOS AI — Restaurant Booking App**
 
-**Status:** PLAN, awaiting owner approval. No code yet.
+**Status:** APPROVED 2026-11-03 (decisions in §9). Building.
 **Repo:** `resortos-booking-agent` (third app repo, decoupled from `resortos-booking-api` and `resortos-booking-web`).
-**Stack:** 100% TypeScript · Mastra (recommended, see §6) · Zod · own `src/types/` folder.
+**Stack:** 100% TypeScript · Mastra (`@mastra/core`, Apache-2.0) · Zod · Express · own `src/types/` folder.
 
 ---
 
@@ -79,13 +79,13 @@ Errors use the same contract as the API: `{ message }` with 400 (bad input), 429
 
 The actual booking is **not** a model tool (§5.3).
 
-### 4.3 Required backend change (`resortos-booking-api`), needs approval
+### 4.3 Backend change (`resortos-booking-api`), approved
 `POST /api/agent/reservations`, authenticated with a **service key** (`X-Agent-Key` header, env `AGENT_API_KEY`), never callable by browsers.
 ```ts
 { email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp }
 ```
 * Same allocation, capacity and double-booking rules as `POST /api/reservations` (shared code path).
-* Data model (see decision D1): `Reservation.userId` becomes optional, and new columns `guestEmail`, `guestPhone`, `source` (`APP` | `AGENT`) are added.
+* Data model (D1): `User.passwordHash` becomes optional (password-less **guest account**, found or created by email). `Reservation.source` (`APP` | `AGENT`) is added. Sign-up with a guest account's email **claims** it (sets the password), so earlier assistant bookings appear in "My bookings".
 * Audit: `CREATE_RESERVATION` with `metadata.source = "AGENT"` and the guest's IP.
 * Admin log and export show "Booked via assistant" with the guest's email/phone.
 * `notify()` sends the confirmation to the guest email (still a log stub in v1).
@@ -94,7 +94,7 @@ The actual booking is **not** a model tool (§5.3).
 
 ### 5.1 Topic guard (booking-only)
 Three layers, so one failure doesn't open the gate:
-1. **Classifier step** before the agent: a short structured-output call `{ onTopic: boolean }`. Off-topic → fixed refusal. The agent never runs.
+1. **Intent tool:** the agent must call `notSupportedYet({ topic })` for anything that isn't a table booking. The server then replies with the fixed refusal, not model text, and logs the topic so later iterations can see what guests ask for. This is the extension point for future intents. It runs in the same model call as the agent, so it adds no latency or cost (a separate classifier call would add about 3 s per turn).
 2. **System prompt** restricting the agent to booking help, with the rules from `technical_decisions.md` §2.
 3. **Tools:** the model can only check availability and draft bookings. It has no way to reach other data.
 
@@ -159,22 +159,114 @@ resortos-booking-agent/
 * **Eval set (real model, run manually once the endpoint is provided):** ~40 prompts: on-topic questions, off-topic requests, injection attempts, ambiguous dates ("next Friday"), party > 50, past dates. Pass = correct refusal/answer and no unconfirmed booking.
 * Test runner: decided in D6.
 
-## 9. Open Decisions (owner)
-| # | Decision | Recommendation |
+## 9. Decisions (owner answers, 2026-11-03)
+| # | Decision | Answer |
 |---|---|---|
-| D1 | How guest bookings are stored | Guest fields on `Reservation` (`userId` optional, `guestEmail`, `guestPhone`, `source`). No passwordless user accounts, which keeps sign-up/login untouched. Trade-off: these bookings won't appear in "My bookings" if the guest registers later |
-| D2 | Unverified email: confirm immediately, or hold until the guest clicks an emailed link? | **Confirm immediately** with the §5.4 limits (email delivery is still a stub). Revisit when real email is added |
-| D3 | Do "booking questions" include the menu and allergy questions? | **No for v1:** sittings, rooms, availability and booking only. Dietary notes are still accepted as special requests |
-| D4 | Where guests chat | Agent repo is an HTTP service only. A small chat screen is added to `resortos-booking-web` as a separate, later task. Mastra's dev studio is used for testing until then |
-| D5 | Framework | Revisit: with the provider adapter (§12) in place, the simplest option is **no framework** (our own ~40-line tool loop over `LlmProvider`). Mastra stays the choice if you want its dev studio, memory and workflows |
-| D6 | Test runner for this repo | **Vitest** (native ESM + TypeScript, which suits ESM-only Mastra without extra transforms). Alternative: Jest + `@swc/jest` like the API, if you prefer one tool everywhere |
-| D7 | LLM endpoint | **Cent AI** (cent-ai.dev, owner's provider). See §11. Owner supplies the key and model ID; nothing is hard-coded |
-| D8 | Cent AI format for `deepseek-v4.1-flash` | **Responses** (`LLM_API_FORMAT=responses`): no thinking blocks to round-trip, fewer output tokens, faster in the ping. A config change only |
-| D9 | OK to run 2 more tiny calls to verify **tool calling**, plus the free model list? | **Yes.** Tool calling is the one capability the assistant can't work without; if this model fails it, we choose another before building |
-| D10 | One model or a fallback? | Start with `deepseek-v4.1-flash` only. If tool calls prove unreliable in the eval set, add a stronger fallback model via `.env` (no code change) |
-| D11 | Key safety | In the Cent AI dashboard, set a **daily spend limit** and a **model allowlist** (`deepseek-v4.1-flash` only) on this key. New keys have no limits |
-| D12 | Guest data sent to the model | Chat text goes through Cent AI to the model vendor (DeepSeek). Email/phone stay out of prompts, but guests may type names or dietary details. Recommendation: one-line notice in the chat UI ("Messages are processed by an AI service to make your booking") for UU PDP transparency |
-| D13 | Language | v1 scope is English only, but guests here may write in Bahasa Indonesia. Options: (a) reply in English only, (b) reply in the guest's language (no extra code; the model handles it). Recommendation: **(b)** with booking read-backs kept in a fixed, clear format |
+| D1 | Guest bookings | A **password-less guest account** is found or created per email, and the booking is attached to it. If the guest later signs up with that email, sign-up **claims** the account (sets the password), so their assistant bookings show in "My bookings" automatically |
+| D2 | Email verification | None. **Confirm straight away**, with the §5.4 limits |
+| D3 | Menu / allergy questions | Ignored this iteration |
+| D4 | Chat surface | **API only** for now |
+| D5 | Framework | **Mastra** (open source) + TypeScript. No other framework |
+| D6 | Test runner | Node's built-in runner (`node --test`), no extra dependency |
+| D7 | LLM | Cent AI, one model: `deepseek-v4.1-flash` |
+| D8 | Cent AI format | Decided by testing (§11.2c): **Messages** (`LLM_API_FORMAT=messages`) |
+| D9 | Test budget | 5 AI calls for capability tests (used, §11.2c), then 5 for end-to-end |
+| D10 | Fallback model | None for now |
+| D11 | Key safety | Done by owner (spend limit and allowlist) |
+| D12 | Data notice | Not needed while it's API-only; add with the chat screen |
+| D13 | Language | **English only** |
+
+**Extensibility:** only booking topics are handled now, but the design has an explicit *intent* step (§5.1) so other topics can get their own handlers later without reworking the booking flow.
+
+## 10. Out of Scope (assistant v1)
+Viewing, changing or cancelling bookings · menu Q&A · payments · languages other than English · voice · saved chat history · real email/WhatsApp delivery · staff-facing assistant.
+
+## 11. LLM Provider: Cent AI
+Checked 2026-11-03 against cent-ai.dev/docs (`api/responses`, `api/messages`, `api/models`, `authentication`, `guides/chat-vs-responses`, `reference/rate-limits`) and the live API.
+
+### 11.1 The two formats we can use
+| | **Messages** (Anthropic format) | **Responses** (OpenAI format) |
+|---|---|---|
+| Endpoint | `POST https://api.cent-ai.dev/v1/messages` | `POST https://api.cent-ai.dev/v1/responses` |
+| SDK base URL | Official Anthropic SDK: `https://api.cent-ai.dev`. **AI SDK (ours): `https://api.cent-ai.dev/v1`** (`@ai-sdk/anthropic` appends `/messages`) | `https://api.cent-ai.dev/v1` |
+| Auth header | `x-api-key: cai_…` + `anthropic-version: 2023-06-01` | `Authorization: Bearer cai_…` |
+| Body | `model`, `messages`, **`max_tokens` (required)**, `system`, `tools`, `thinking`, `stream`, `cache_control` | `model`, `input`, `instructions`, `tools`, `reasoning`, `stream`, `store`, `previous_response_id` (extra params "sent to the model as is") |
+| Tool calls come back as | `content` blocks of type `tool_use`, `stop_reason: "tool_use"` | `output` items of type `function_call` |
+| Cost | `usage.cost` (stream: final `message_delta`) | `usage.cost` (stream: `response.completed`) |
+| Extras | `POST /v1/messages/count_tokens` (free) | `previous_response_id` works only if the model keeps state. **Cent AI stores no conversation state** |
+| Errors | Anthropic error shape | OpenAI error shape |
+| Docs example model | `claude-opus-5` | `gpt-6-sol` |
+
+Cent AI's guide: "Pick the one your tool or code already speaks." Same host, same pricing.
+
+**Our choice:** decided by the model.
+* **Claude model → Messages** (`LLM_API_FORMAT=messages`): Anthropic's own format, so tool use is native. Mastra uses `@ai-sdk/anthropic` with `baseURL` set.
+* **GPT-style model → Responses** (`LLM_API_FORMAT=responses`): Mastra uses `@ai-sdk/openai`'s Responses model with `baseURL` set.
+* Either way the server stays **stateless**: full history each turn, `store: false`, no `previous_response_id`, since Cent AI doesn't keep state.
+
+### 11.2 Specifying the model
+* Set `LLM_MODEL` in `.env` to an ID **exactly** as listed by `GET https://api.cent-ai.dev/v1/models` (Bearer auth). Unknown IDs return 404 "The model '…' does not exist or is not available."
+* Each model in that list has `capabilities`, `context_window`, `pricing` and `status`. **Choose one whose capabilities include tools**, with status `operational`.
+* The agent sends it as the `model` field on every request. Switching models is an `.env` change, plus `LLM_API_FORMAT` if the vendor family changes.
+
+### 11.2b Live ping results (model `deepseek-v4.1-flash`)
+Two tiny requests ("Reply with exactly: pong", output capped at 16 tokens), sent with curl:
+
+| | Messages (`/v1/messages`) | Responses (`/v1/responses`) |
+|---|---|---|
+| Result | HTTP 200, `stop_reason: end_turn`, text "pong" | HTTP 200, `status: completed`, `output_text` "pong" |
+| Latency | 3.3 s | 2.4 s |
+| Tokens (in / out) | 27 / 11 (includes a `thinking` block) | 27 / 3 |
+| Cost | $0.000020 (Cent AI minimum) | $0.000020 (Cent AI minimum) |
+| Rate limit headers | `x-ratelimit-limit: 600`, `remaining: 599` | same |
+
+Auth, base URL and model ID are correct; both formats work for this non-Claude model.
+
+### 11.2c Capability tests (5 calls, tool calling)
+Same booking question with one `checkAvailability` tool; then the tool result sent back.
+
+| Call | Format | Result | Time | Tokens in / out |
+|---|---|---|---|---|
+| 1 | chat/completions + tool | `finish_reason: tool_calls`, correct args | 3.3 s | 383 / 89 |
+| 2 | responses + tool | `function_call`, correct args | 2.1 s | 383 / 83 |
+| 3 | messages + tool | `tool_use`, correct args | 3.4 s | **127** / 89 |
+| 4 | messages, tool result → answer | `end_turn`, correct summary (17:00 full, 19:30 has 12) | 3.3 s | **165** / 148 |
+| 5 | responses, tool result → answer | `completed`, same correct summary | 3.1 s | 543 / 129 |
+
+All cost Cent AI's minimum ($0.00002 each). **Messages chosen (D8):** same quality at ~3.3× fewer input tokens per call, a gap that grows with every turn. Watch item: Messages replies may include `thinking` blocks. Replaying the assistant content unchanged worked in call 4. Responses is the fallback if Mastra's Anthropic provider has trouble with them.
+
+Style finding: the model answers with markdown tables and em dashes. The system prompt asks for short plain sentences (the text reaches guests).
+
+### 11.3 Keys, limits, costs
+* Keys look like `cai_…` and are shown once at creation. Each key belongs to one project and can carry **daily/monthly spend limits, an IP allowlist and a model allowlist**. New keys have no limits, so set them.
+* Keep keys server-side only: the API allows cross-origin calls, so a browser-exposed key is public.
+* Rate limit: 600 requests/minute per key (`x-ratelimit-*` headers, `Retry-After`). 429 codes: `rate_limited`, `key_limit_exceeded`, `project_budget_exceeded`. The agent maps them to "Assistant is busy / unavailable, please try again".
+* Prepaid, no auto-renewal: an empty balance makes the assistant fail. The agent logs `usage.cost` per request.
+
+### 11.4 Where the key goes
+`resortos-booking-agent/.env` (git-ignored; template in `.env.example`): `LLM_API_FORMAT`, `LLM_BASE_URL`, `LLM_API_KEY`, `LLM_MODEL`.
+
+### 11.5 Smoke test before building (curl only, a few cents)
+1. `GET /v1/models` → confirm `LLM_MODEL` exists, is `operational` and lists tools.
+2. One request in the chosen format with a single tool → expect a `tool_use` / `function_call`.
+3. One plain request → check latency and `usage.cost`.
+4. Topic-guard output: JSON from the model validated by Zod, with no reliance on provider-specific structured-output flags.
+
+**Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design keeps guest email/phone out of prompts (§5.5).
+
+## 12. Provider Adapter (built 2026-11-03)
+The agent calls a provider-neutral interface, so changing AI vendors means replacing one file:
+
+```ts
+interface LlmProvider {
+  complete(request: { system; messages; tools?; maxOutputTokens? }): Promise<{ text; toolCalls; stopReason; usage: { inputTokens; outputTokens; costUsd? } }>;
+  listModels(): Promise<{ id; capabilities; status?; contextWindow?; ownedBy? }[]>;
+}
+```
+* `src/types/llm.ts`: the neutral types (`LlmMessage`, `LlmTool`, `LlmToolCall`, `LlmResult`, `LlmError` with a `retryable` flag).
+* `src/llm/cent_ai_api.ts`: `createCentAiProvider(config)` and `centAiConfigFromEnv()`. Translates to the Cent AI **Messages** or **Responses** format (per `LLM_API_FORMAT`), maps tool calls and tool results both ways, reads `usage.cost`, and normalises both error shapes (`invalid_api_key`, `rate_limited` + `Retry-After`, `project_budget_exceeded`, `timeout`, `network`, `bad_response`).
+* **Another provider later:** add `src/llm/<provider>_api.ts` exporting a factory that returns `LlmProvider`; the agent code doesn't change.
+* Tests: `tests/cent_ai_api.test.ts` (16 cases, `fetch` mocked, Node's built-in test runner). Live check: `npm run smoke` once `.env` has the key and model.
 
 ## 13. Build Plan (after D1–D13 are answered)
 Each step is test-first and ends in a commit; nothing ships to guests until step 6.
