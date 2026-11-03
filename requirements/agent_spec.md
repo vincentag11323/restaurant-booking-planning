@@ -85,7 +85,7 @@ The backend learns a third role, **`AGENT`** (§5.5), and two agent-only endpoin
 | Method | Path | Permission | Purpose |
 |---|---|---|---|
 | POST | `/api/agent/reservations` | `reservation:create_on_behalf` | Book for a guest by email. Body: `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp }`, header `Idempotency-Key` |
-| GET | `/api/agent/guests/:email` | `guest:read_one` | Look up **one** guest by exact email. Returns only `{ exists, upcomingAssistantBookings }`, no name, phone or bookings. No list or search |
+| POST | `/api/agent/guests/lookup` | `guest:read_one` | Read **one** guest by **exact** email (body `{ email }`, so the address stays out of URLs and access logs). Returns only `{ exists, upcomingAssistantBookings }` |
 
 * Booking uses the same allocation, capacity and double-booking code as `POST /api/reservations` (shared function, not a copy).
 * Data model (D1): `User.passwordHash` becomes optional (password-less **guest account**, found or created by email). Sign-up with a guest account's email **claims** it (sets the password), so earlier assistant bookings appear in "My bookings".
@@ -134,13 +134,18 @@ Three roles. Every route checks a **permission**, and roles map to permissions i
 | Own profile and own reservations (read, create, reschedule, cancel) | ✅ | | |
 | Admin stats, booking log, detail, export (read-only) | | ✅ | |
 | `reservation:create_on_behalf` (book for a guest email) | | | ✅ |
-| `guest:read_one` (one guest by exact email, minimal fields) | | | ✅ |
+| `guest:read_one` (one guest per request, exact email, minimal fields) | | | ✅ |
+| List / search guests or bookings ("everyone booked tonight") | | ✅ | ❌ |
 | Public: availability, menu | ✅ | ✅ | ✅ |
 
 * **Everything else is `403` for `AGENT`**: no reading or changing reservations, no admin routes, no profile, no listing or searching users. A test calls every other route with an agent token and expects `403`.
 * **Now:** a seeded service account (`assistant@resortos.internal`, role `AGENT`, password from env) signs in through the normal login and gets the usual 15-minute JWT, so the backend knows the request comes from the AI. When a call returns `401`, the agent simply signs in again (no refresh cookie to manage). The account can't be created by sign-up and has no "My bookings".
 * **Later (planned):** replace the login with a **scoped API key** (hashed in the DB, revocable, rate-limited) carrying exactly these two permissions. Routes check permissions, not how the caller authenticated, so the swap doesn't touch the endpoints.
-* The agent never sees other guests' data: it can only ask "does this one email exist, and how many upcoming assistant bookings does it have?"
+* **One user at a time, never more (owner rule, 2026-11-03):**
+  * Exact match only. The email is validated as an email and compared exactly (case-insensitive): no wildcards, prefixes or partial matches, and one email per request.
+  * Minimal answer: `{ exists, upcomingAssistantBookings }`. No name, phone, booking details or IDs, because the email in a chat is **unverified** and whatever the agent reads can end up in the reply to whoever typed it.
+  * No list, search, date or "tonight" queries exist for `AGENT`. Requests like "list everyone booked tonight" hit `notSupportedYet` in the agent and `403` in the API. Listing and searching stay **admin-only**.
+  * Every lookup is audited (`VIEW_GUEST`, actor = agent account) and rate-limited (60 / minute for the agent account) so enumeration attempts are visible and slow.
 
 ### 5.6 Privacy
 The email and phone are used only for the booking and its confirmation. They're never sent to the LLM; the model sees `contact: provided`. The agent logs no message content.
@@ -349,7 +354,8 @@ All deterministic tests use a **scripted fake `LlmProvider`** (no AI calls, no c
 | PII to the LLM | Captured fake-model requests contain **no email or phone** |
 | Abuse limits | 11th chat in a minute → `429`; 4th assistant booking in an hour from one IP → `429`; 3rd upcoming booking for one email → F5 |
 | Input bounds | > 30 turns, message > 2,000 chars, missing/invalid email, invalid phone, non-JSON → `400` |
-| RBAC (API) | No token → `401`; `USER`/`ADMIN` tokens on agent routes → `403`; **agent token on every non-agent route → `403`**; `GET /api/agent/guests/:email` returns only `{ exists, upcomingAssistantBookings }` and can't list or search; the agent account can't sign up, refresh into another role, or appear in "My bookings" |
+| RBAC (API) | No token → `401`; `USER`/`ADMIN` tokens on agent routes → `403`; **agent token on every non-agent route → `403`** (including admin search/list); guest lookup: exact email only (partial, wildcard, list or non-email input → `400`), returns only `{ exists, upcomingAssistantBookings }`, audited, rate-limited; the agent account can't sign up, refresh into another role, or appear in "My bookings" |
+| Data exposure (agent) | "List everyone booked tonight", "who booked under gmail", "show Ayu's booking" → refusal, no API call that returns other guests' data |
 | Guest accounts (API) | Password-less account can't log in (same `401` as a wrong password, no enumeration); sign-up with a guest email claims it and keeps its bookings; sign-up with a normal account's email still `400` |
 | Idempotency (API) | Same `Idempotency-Key` twice → one reservation, same response |
 | Logging | Chat content isn't logged; only intent, tool names, status and cost |
