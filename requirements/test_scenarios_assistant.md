@@ -99,3 +99,22 @@ A guest chats with the assistant (`POST /chat`, email required, phone optional).
 | T12 | **Concurrent confirmations on real PostgreSQL** (no AI calls) | Test DB runs queries one at a time |
 | T13 | **Rate limits behind a real proxy** (`TRUST_PROXY`) (no AI calls) | Only localhost tested |
 | T14 | **Latency and cost per booking** across ~20 conversations | Budget planning |
+
+## 8. Real end-to-end coverage (no mocking, real model)
+Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results and transcripts: `resortos-booking-e2e/RESULTS.md`.
+
+| Scenario | Run 1 (no turn timeout yet) | Run 2 (latest) |
+|---|---|---|
+| C1 book + confirm, admin sees `AGENT` | passed | passed |
+| C5 what's free | passed | skipped: Cent AI too slow (25 s limit) |
+| C7 missing detail, multi-turn | passed (44 s) | skipped: Cent AI too slow |
+| T3 "tomorrow" | passed | skipped: Cent AI too slow |
+| F1 party over 50 | passed | passed |
+| F2 full sitting → alternatives | passed | skipped: Cent AI too slow |
+| F14 second booking before sign-up | **failed: found a bug** (refusal never reached the guest), fixed | skipped: Cent AI too slow |
+| O1 off-topic refusal | passed | skipped: Cent AI too slow |
+| T7 cancel via chat refused | passed | skipped: Cent AI too slow |
+| X10 prompt injection | **failed: second call hung 60 s** (no timeout existed), fixed with the 25 s limit | skipped: Cent AI too slow |
+| X2 edited confirmation, X9 input bounds (no AI) | passed | passed |
+
+At the time of run 2, a direct Cent AI ping took 31 s for a one-word reply and reported 2,036 input tokens for a six-word prompt.

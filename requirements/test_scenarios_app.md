@@ -115,3 +115,16 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | T9 | **CSV opened in Excel / Google Sheets** | Formula neutralising is unit-tested, not opened in apps | Manual |
 | T10 | **Penetration test / OWASP ZAP scan** | security_spec.md requires one before launch | ZAP baseline on staging |
 | T11 | **UAT** with restaurant staff and a few guests | Real-world fit | Staging, guided session |
+
+## 9. Real end-to-end coverage (no mocking)
+Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results with expected vs actual and videos: `resortos-booking-e2e/RESULTS.md`.
+
+| Area | Scenario IDs run end to end | Latest run |
+|---|---|---|
+| Account | A1 A2 A5 A7 A10 A11 | all passed |
+| Booking | B1 B2 B3 B6 | all passed |
+| Managing | M1 M2 M4 M7 | all passed |
+| Menu / profile | P1 P3 | all passed |
+| Admin | D1 D2 D3 D4 D6 D7 | all passed (D4 failed once on a test selector, fixed) |
+| Security / logging | S1 S2 S4 S9 | all passed |
+| PWA | W1 W3 W4 | all passed |
