@@ -8,7 +8,7 @@ Base URL: `/api`. JSON in/out. Times are ISO-8601 UTC strings in responses. Date
 
 Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN · 🤖 AGENT (the AI booking assistant's service account)
 
-**RBAC:** routes check permissions (`src/lib/permissions.ts`). `AGENT` gets `403` on every route except §7; admins can't create bookings.
+**RBAC:** routes check permissions (`src/lib/permissions.ts`). `AGENT` gets `403` on every route except §6; admins can't create bookings.
 
 ## 1. Auth
 | Method | Path | Access | Body | Success | Errors |
@@ -100,7 +100,7 @@ type Stats = {
 
 Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`. Export → audit `EXPORT_RESERVATIONS` (`metadata.rows`), plus `SECURITY_ALERT` if rows > 1,000. Export is capped at 10,000 rows.
 
-## 7. Agent (AI booking assistant) 🤖
+## 6. Agent (AI booking assistant) 🤖
 | Method | Path | Input | Success | Errors |
 |---|---|---|---|---|
 | POST | `/agent/reservations` | `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp? }`, header `Idempotency-Key?` (8–200 chars) | `201 Reservation` (`source: "AGENT"`); same key again → `200` with the same booking | Same `400` messages as `POST /reservations`, plus `This email already has 2 upcoming assistant bookings. Sign in to manage them.`, `This email can't be booked through the assistant` (staff accounts), `Idempotency-Key was already used for another booking` |
@@ -110,7 +110,7 @@ Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`.
 * Audit: `CREATE_RESERVATION` (actor = assistant, `metadata: { source, onBehalfOf, clientIp }`), `VIEW_GUEST` for every lookup.
 * Export adds a `source` column.
 
-## 6. Misc
+## 7. Misc
 | Method | Path | Success |
 |---|---|---|
 | GET | `/health` | `200 { status: "ok" }` |
