@@ -132,6 +132,21 @@ Side effects: `GET /admins/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`
 | GET | `/public/health` | `200 { status: "ok" }` |
 | * | unknown route | `404 { message: "Route not found" }` |
 
+## 7a. Interactive API docs (Swagger / OpenAPI)
+**Owner request 2026-11-04.** The API publishes an **OpenAPI 3.1** document and a **Swagger UI** page, written for people, not only machines.
+
+| Method | Path | Success |
+|---|---|---|
+| GET | `/public/docs` | `200` the Swagger UI page (try every endpoint from the browser) |
+| GET | `/public/docs/openapi.json` | `200` the OpenAPI 3.1 document (JSON) |
+
+* **Framework:** `swagger-ui-express` serves the page; `@asteasolutions/zod-to-openapi` builds the document **from the same Zod schemas that validate requests**, so the docs can't drift from the real rules. No hand-written YAML.
+* **Human-readable:** every endpoint has a one-line `summary` and a plain-language `description` (who may call it, what it does, side effects such as audit rows or log lines), a tag per route group (`Public`, `Auth`, `Users`, `Admins`, `Agents`), an example request and response, and every error response with its exact `message` from this spec. The document's top `description` explains sign-in (session cookie), the assistant key, the route groups and the error shape in a few short paragraphs.
+* **Security schemes:** `sessionCookie` (`apiKey` in cookie `session`) for `/users/*` and `/admins/*`; `agentKey` (`apiKey` in header `X-Agent-Key`) for `/agents/*`; none for `/public/*` and `/auth/*`.
+* **Where it's shown:** under `/api/public` (no auth middleware), in development and tests always; in production only when `API_DOCS=true` (default off, so the route list isn't advertised).
+* **Security headers:** the strict `helmet` content-security policy stays on every route except the docs page, which gets only what Swagger UI needs.
+* **Drift guard (test):** every route the app mounts appears in the OpenAPI document with the same method and path, and every documented path is mounted.
+
 ## 8. Logging: one success log, one error log
 **Owner request 2026-11-04.** Two files, both JSON lines, both rotated the same way.
 

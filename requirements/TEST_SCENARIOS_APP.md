@@ -94,6 +94,7 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | S8 | Production mode | Secure cookie, trusts one proxy | JEST environment | ✅ |
 | S9 | Any failed request (4xx/5xx) | One `[METHOD]`-tagged JSON line in `logs/errors.log` + `console.error`; no bodies or secrets | JEST, E2E | ⬜ new |
 | S16 | Every successful create / update / delete (table in api_spec §8.1) | One `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` + `console.log`, with the `action`; nothing for GETs; no personal data or secrets | JEST | ⬜ new |
+| S17 | Open `/api/public/docs` and `/api/public/docs/openapi.json` | Swagger UI loads; the document lists every mounted route (and nothing else) with summary, description, security scheme and error messages; off in production unless `API_DOCS=true` | JEST, API | ⬜ new |
 | S11 | Guest or admin cookie on `/api/agents/*` | `401 Authentication required` (the cookie isn't read there) | API agent, JEST | ⬜ new |
 | S12 | Anyone, including the assistant, on `/api/public/*` (menu, availability, health) | Works with no cookie or key; any cookie or key sent is not read | API agent, JEST | ⬜ new |
 | S13 | Old or forged cookie on `/api/auth/login` or `/api/public/menus` | Ignored: sign-in and menu work | JEST | ⬜ new |

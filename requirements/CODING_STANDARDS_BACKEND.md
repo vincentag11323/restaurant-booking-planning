@@ -26,6 +26,7 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 * Every route lives in a **route group**, each with its own middleware (`API_SPEC.md`, "Route groups"): `/api/public/*` none, `/api/auth/*` rate limit, `/api/users/*` sign-in check, `/api/admins/*` sign-in + admin check, `/api/agents/*` agent key check.
 * Routes take the caller's id and role **only from `req.auth`**, never from the body or query.
 * HTTP methods: `GET` reads, `POST` creates, `PATCH` updates part of a record, `DELETE` removes or cancels.
+* **Every route is documented in the OpenAPI registry** (Swagger, `API_SPEC.md` §7a) in the same commit that adds or changes it: summary, plain-language description, request and response schemas from the route's Zod schemas, an example, and every error with its exact message. The drift-guard test fails otherwise.
 * Errors are always `{ "message": string }`, thrown as `HttpError(status, message)` and sent by the error handler. Status codes: 400 bad input, 401 not signed in / bad credentials, 403 signed in but not allowed, 404 not found or not yours, 429 rate limited.
 
 ## 4. Input, database, security

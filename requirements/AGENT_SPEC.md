@@ -71,6 +71,8 @@ Errors use the same contract as the API: `{ message }` with 400 (bad input), 429
 
 `GET /health` → `{ status: "ok" }`
 
+**Interactive docs (owner request 2026-11-04):** the agent server is an API too, so it publishes the same kind of docs as the booking API (`API_SPEC.md` §7a): `GET /docs` (Swagger UI via `swagger-ui-express`) and `GET /docs/openapi.json` (OpenAPI 3.1 built with `@asteasolutions/zod-to-openapi` from the Zod schema that validates `POST /chat`). Every route has a plain-language summary and description, examples of each reply kind (a normal reply, a read-back with `pendingBooking`, a confirmed `booking`, a rate-limit reply), and every error. Shown in development and tests; in production only when `API_DOCS=true`. Same drift-guard test.
+
 ### 4.2 Tools the model can call (and nothing else)
 | Tool | Input (Zod) | Calls |
 |---|---|---|
