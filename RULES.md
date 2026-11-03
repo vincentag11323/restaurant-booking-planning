@@ -56,7 +56,7 @@ The Haiku Obsidian logger runs after stage 4 (see `AGENTS_TO_BE_USED.md` §4). T
 
 ## 4. Always true (from `AGENTS_TO_BE_USED.md` §6)
 * **API routes must be plural** (`/api/users`, `/api/admins`, `/api/agents`, `/public/menus`, `/users/reservations`). Only words with no sensible plural stay singular: `public`, `auth`, actions (`register`, `login`, `logout`, `export`, `lookup`), `health`, `me`, `stats`. Owner rule, 2026-11-04.
-* **camelCase, never snake_case** (owner rule, 2026-11-04): file names, functions, variables, constants, keys. Only env vars, database enum values and audit/log action names stay UPPER_SNAKE_CASE (they are data). Details in the coding standards.
+* **camelCase, never snake_case** (owner rule, 2026-11-04): file names, folders, functions, variables, keys. The only exception is UPPER_SNAKE_CASE (fully upper case) for constants, env vars, database enum values and audit/log action names. Details in the coding standards.
 * **Coding standards (owner rule, 2026-11-04):** backend repos (`resortos-booking-api`, `resortos-booking-agent`, and `resortos-booking-e2e` for TypeScript and tests) follow `requirements/coding_standards_backend.md`; the React app (`resortos-booking-web`) follows `requirements/coding_standards_react.md`. Build follows them; Review checks against them. Everything is TypeScript (`strict`); no `.js` source files.
 * No code before the spec is approved by the owner. KISS. TypeScript only.
 * Backend Jest keeps `src/` at 100% coverage; no coverage-ignore comments.
