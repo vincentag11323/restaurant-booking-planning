@@ -48,6 +48,7 @@ ResortOS AI lets restaurant guests (Users) browse the menu, reserve tables and m
 | | Export filtered log to CSV / JSON | Audited. A >1,000-row export raises an alert |
 | **Security & Audit** | RBAC (USER / ADMIN), IDOR protection (404 on others' records), rate-limited auth, Zod validation, helmet, CORS | See `security_spec.md` |
 | | Immutable `AuditLog` table + failed-login & bulk-export alerts (logged) | See `audit_trail.md` |
+| **App shell** | Mobile-first installable PWA: web manifest, home-screen icons, cached app shell, clear offline message | Single-column phone layout with bottom tab bar. API data is always fetched live, never cached (added 2026-11-03) |
 | **Quality** | Playwright API suite (backend) + Playwright UI suite with mocked API (frontend) + unit tests of slot/allocation logic | See `testing_plan.md` |
 
 ### 3.2 ❌ OUT OF SCOPE — We are NOT building in v1
@@ -65,7 +66,7 @@ ResortOS AI lets restaurant guests (Users) browse the menu, reserve tables and m
 | Table map / manual table picking by guest | Auto-allocation only | v3 |
 | Payments, deposits, no-show fees | No PCI scope in v1 | v3 |
 | Waitlist, walk-ins, online ordering | | Later |
-| Multi-language UI, native mobile apps, PWA/offline | Web responsive (English) only | Later |
+| Multi-language UI, native mobile apps, offline booking or offline data | English PWA only. Availability must be live, so nothing is booked or shown from cache | Later |
 | More than 2 branches / branch management UI | Branches are a fixed enum | Later |
 | Account self-deletion & data export UI (UU PDP) | Handled manually on request in v1 | v2 |
 | Real-time push updates (WebSockets) on admin log | Manual refresh / refetch is enough | Later |
