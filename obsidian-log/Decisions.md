@@ -345,3 +345,42 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 
 **Date:** 2026-11-03  
 **Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+
+---
+
+## Session-Check 401 Stays Logged (Owner Decision)
+
+**Decision:** Anonymous page-load session checks that return 401 are logged to errors.log.
+
+**Why:**
+- Missing or expired session is a real failure (user needs to sign in)
+- Not noise; indicates session expired or never established
+- Production monitoring can track sign-in rates via 401 log
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]
+
+**Recorded:** api_spec.md §8
+
+---
+
+## Fixed 1-Hour Cookie Session, No Refresh Token, Agent API Key (Owner Approved, Pending Implementation)
+
+**Decision:** Simpler session design (approved, to be built in next session):
+- One HttpOnly session cookie fixed at 1 hour from sign-in (not extended by activity)
+- Signed out after 1 hour; no refresh token
+- No PWA idle timer (screens keep data, next 401 goes to sign-in)
+- AI agent uses predefined API key created at seeding (hash stored, X-Agent-Key header, role AGENT)
+
+**Why:**
+- Simpler than refresh token + idle timer
+- Clear expiry prevents stale sessions in production
+- API key authenticates agent without user context
+- Reduces session management complexity
+
+**Status:** APPROVED, NOT YET IMPLEMENTED
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]
+
+**Recorded:** security_spec.md §1, DIAGRAM.md §4

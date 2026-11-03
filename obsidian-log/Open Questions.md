@@ -61,3 +61,26 @@ Docs live in root repo, shared reference for backend and frontend.
 **Related decisions:**
 - [[Decisions#API Unversioned (Proposed Default, Awaiting Confirmation)]]
 - [[Decisions#TypeScript Type Sharing = Hand-Written (Proposed Default, Awaiting Confirmation)]]
+
+---
+
+## Simpler Sessions: Approved, Pending Implementation
+
+**Status:** Owner approved. To be built in the next session.
+
+**Approved design:**
+- One HttpOnly session cookie fixed at 1 hour from sign-in (not extended by activity)
+- Signed out after 1 hour; no refresh token
+- No PWA idle timer (screens keep data, next 401 goes to sign-in)
+- AI agent uses predefined API key from seeding (hash stored, X-Agent-Key header, role AGENT)
+
+**Why approved:**
+- Simpler than refresh token + idle timer
+- Clear expiry prevents stale sessions
+- API key authenticates agent without user context
+
+**Recorded:** security_spec.md §1, DIAGRAM.md §4
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]  
+**Decision:** [[Decisions#Fixed 1-Hour Cookie Session, No Refresh Token, Agent API Key (Owner Approved, Pending Implementation)]]
