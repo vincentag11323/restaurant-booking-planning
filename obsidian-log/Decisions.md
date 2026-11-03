@@ -410,3 +410,12 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 
 **Date:** 2026-11-04  
 **Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
+
+---
+
+## Video Files Gitignored in All Repos; .gif Excluded From Rule
+
+**Decision:** Video files (.mp4, .webm, .mov, .avi, .mkv, .m4v) are gitignored in all five repos. .gif is deliberately excluded (often used as doc images).
+
+**Date:** 2026-11-04  
+**Session:** [[Session Log/2026-11-04#Video Files Gitignored + History Audit]]

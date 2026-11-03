@@ -696,3 +696,24 @@ Lessons about how to work with this user and project.
 - When debugging test output, assume codes are there until verified
 
 **Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
+
+---
+
+## 37. Check Git History Before Assuming a Rewrite is Needed
+
+**Rule:** Before committing a history rewrite to remove large files, scan the entire git object store with `git rev-list --objects --all | git cat-file --batch-check` to confirm the files actually exist.
+
+**Why:**
+- Assumed videos had been committed across 5 repos (disk files + push concerns)
+- Audit of all git objects in all refs showed no video files ever committed
+- History rewrite would have been a no-op (wasted time, risk of breaking refs)
+- One repo (e2e) had videos on disk in a .gitignored folder; already excluded
+
+**How to apply:**
+- Before proposing history rewrite: verify the problem exists
+- Use `git rev-list --objects --all | git cat-file --batch-check` to audit all objects
+- Check which folders are already .gitignored (e.g., `test-results/`, `playwright-report/`)
+- Then decide: add to .gitignore (safe) vs. rewrite history (risky)
+- Document the audit result in session log to avoid re-scanning later
+
+**Session:** [[Session Log/2026-11-04#Video Files Gitignored + History Audit]]
