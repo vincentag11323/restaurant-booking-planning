@@ -42,7 +42,7 @@ flowchart LR
 | `resortos-booking-e2e` | Real end-to-end tests, videos, `RESULTS.md`, load test | n/a | n/a |
 | root (planning) | `requirements/` specs, `obsidian-log/`, this file | n/a | n/a |
 
-Each repo keeps **its own types** (`src/types/`); nothing is shared at compile time, only HTTP contracts from `requirements/api_spec.md`.
+Each repo keeps **its own types** (`src/types/`); nothing is shared at compile time, only HTTP contracts from `requirements/API_SPEC.md`.
 
 ## 2. Guest books in the app
 

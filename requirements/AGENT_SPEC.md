@@ -105,7 +105,7 @@ The backend learns a third role, **`AGENT`** (§5.5), and two agent-only endpoin
 ### 5.1 Topic guard (booking-only)
 Three layers, so one failure doesn't open the gate:
 1. **Intent tool:** the agent must call `notSupportedYet({ topic })` for anything that isn't a table booking. The server then replies with the fixed refusal, not model text, and logs the topic so later iterations can see what guests ask for. This is the extension point for future intents. It runs in the same model call as the agent, so it adds no latency or cost (a separate classifier call would add about 3 s per turn).
-2. **System prompt** restricting the agent to booking help, with the rules from `technical_decisions.md` §2.
+2. **System prompt** restricting the agent to booking help, with the rules from `TECHNICAL_DECISIONS.md` §2.
 3. **Tools:** the model can only check availability and draft bookings. It has no way to reach other data.
 
 ### 5.2 Prompt injection
@@ -334,7 +334,7 @@ Each option is a ready-to-confirm `BookingDraft`. The reply lists them as short 
 `proposeBooking` returns the draft plus `draftToken = HMAC-SHA256(draft fields + email + expiry, AGENT_DRAFT_SECRET)`, valid for **15 minutes**. `confirmDraft` must carry the same token, so the guest books exactly what was read back. The token doubles as the **idempotency key** sent to the API (`Idempotency-Key` header, stored unique on the reservation), which is what makes F6a safe.
 
 ## 14. Testing
-Every scenario (tested and still to test), the suites that cover it, and the live AI runs are in [test_scenarios_assistant.md](test_scenarios_assistant.md). Guest and admin scenarios without the assistant: [test_scenarios_app.md](test_scenarios_app.md).
+Every scenario (tested and still to test), the suites that cover it, and the live AI runs are in [TEST_SCENARIOS_ASSISTANT.md](TEST_SCENARIOS_ASSISTANT.md). Guest and admin scenarios without the assistant: [TEST_SCENARIOS_APP.md](TEST_SCENARIOS_APP.md).
 
 ## 15. Build Plan (after D1–D13 are answered)
 Each step is test-first and ends in a commit; nothing ships to guests until step 6.
@@ -353,4 +353,4 @@ Each step is test-first and ends in a commit; nothing ships to guests until step
 Ports: API 4000, web 5173, **agent 4300** (4100 is the API test server; 5180 the web test server).
 
 ## 16. End-to-End Results
-See [test_scenarios_assistant.md](test_scenarios_assistant.md) §6 (live runs) and §7 (still to test with the real model).
+See [TEST_SCENARIOS_ASSISTANT.md](TEST_SCENARIOS_ASSISTANT.md) §6 (live runs) and §7 (still to test with the real model).

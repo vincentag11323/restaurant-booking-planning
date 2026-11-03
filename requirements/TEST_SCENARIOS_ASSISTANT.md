@@ -1,7 +1,7 @@
 # Test Scenarios: Guest → AI Assistant → Booking API
 **ResortOS AI — Booking Assistant**
 
-A guest chats with the assistant (`POST /chat`, email required, phone optional). The assistant uses the AI model to understand the request and calls the booking API as the `AGENT` account. For people using the app directly see [test_scenarios_app.md](test_scenarios_app.md). What the assistant can and can't do: [`resortos-booking-agent/AGENT_CAPABILITIES.md`](../resortos-booking-agent/AGENT_CAPABILITIES.md).
+A guest chats with the assistant (`POST /chat`, email required, phone optional). The assistant uses the AI model to understand the request and calls the booking API as the `AGENT` account. For people using the app directly see [TEST_SCENARIOS_APP.md](TEST_SCENARIOS_APP.md). What the assistant can and can't do: [`resortos-booking-agent/AGENT_CAPABILITIES.md`](../resortos-booking-agent/AGENT_CAPABILITIES.md).
 
 **Status:** ✅ automated and passing · 🤖 passed with the real AI model (Cent AI, `deepseek-v4.1-flash`) · ⬜ to be tested
 
@@ -101,7 +101,7 @@ A guest chats with the assistant (`POST /chat`, email required, phone optional).
 | T14 | **Latency and cost per booking** across ~20 conversations | Budget planning |
 
 ## 8. Real end-to-end coverage (no mocking, real model)
-Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results and transcripts: `resortos-booking-e2e/RESULTS.md`.
+Suite: `resortos-booking-e2e` ([E2E_SPEC.md](E2E_SPEC.md)). Latest results and transcripts: `resortos-booking-e2e/RESULTS.md`.
 
 | Scenario | Run 1 (no turn timeout yet) | Run 2 (latest) |
 |---|---|---|

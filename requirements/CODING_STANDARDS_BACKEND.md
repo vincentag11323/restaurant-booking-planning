@@ -23,7 +23,7 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 
 ## 3. Routes (REST)
 * **Route names are plural**: `/api/users`, `/api/admins`, `/api/agents`, `/public/menus`, `/public/availabilities`, `/users/reservations`. Exceptions only where a plural makes no sense: `public`, `auth`, action words (`register`, `login`, `logout`, `export`, `lookup`), `health`, `me`, `stats`.
-* Every route lives in a **route group**, each with its own middleware (`api_spec.md`, "Route groups"): `/api/public/*` none, `/api/auth/*` rate limit, `/api/users/*` sign-in check, `/api/admins/*` sign-in + admin check, `/api/agents/*` agent key check.
+* Every route lives in a **route group**, each with its own middleware (`API_SPEC.md`, "Route groups"): `/api/public/*` none, `/api/auth/*` rate limit, `/api/users/*` sign-in check, `/api/admins/*` sign-in + admin check, `/api/agents/*` agent key check.
 * Routes take the caller's id and role **only from `req.auth`**, never from the body or query.
 * HTTP methods: `GET` reads, `POST` creates, `PATCH` updates part of a record, `DELETE` removes or cancels.
 * Errors are always `{ "message": string }`, thrown as `HttpError(status, message)` and sent by the error handler. Status codes: 400 bad input, 401 not signed in / bad credentials, 403 signed in but not allowed, 404 not found or not yours, 429 rate limited.
@@ -37,7 +37,7 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 * Config comes from environment variables, read and checked once in `src/config.ts`; missing required values stop the app at start.
 
 ## 5. Logging (api)
-* Every successful create / update / delete writes one `[METHOD]`-tagged line to `logs/app.log` and `console.log`; every failed request one tagged line to `logs/errors.log` and `console.error` (`api_spec.md` §8). Use the shared logger in `src/lib/logs.ts`; no other `console.*` calls in app code.
+* Every successful create / update / delete writes one `[METHOD]`-tagged line to `logs/app.log` and `console.log`; every failed request one tagged line to `logs/errors.log` and `console.error` (`API_SPEC.md` §8). Use the shared logger in `src/lib/logs.ts`; no other `console.*` calls in app code.
 * Never log bodies, passwords, tokens, keys, names, emails, phone numbers or allergies.
 
 ## 6. Naming and style
@@ -51,7 +51,7 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 ## 7. Testing
 * Test first (red → green → refactor).
 * api: Jest keeps `src/` at **100%** coverage (statements, branches, functions, lines); the Playwright API suite covers each endpoint. agent: `node --test` covers the rules, the API client and the server.
-* Each test names its scenario ID from `test_scenarios_app.md` / `test_scenarios_assistant.md` and asserts the exact status code and message from the spec.
+* Each test names its scenario ID from `TEST_SCENARIOS_APP.md` / `TEST_SCENARIOS_ASSISTANT.md` and asserts the exact status code and message from the spec.
 * Tests never weaken: a failing test is fixed in the code, not deleted.
 
 ## 8. Git

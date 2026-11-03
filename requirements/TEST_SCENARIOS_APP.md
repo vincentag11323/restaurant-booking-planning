@@ -1,7 +1,7 @@
 # Test Scenarios: Real Users (Guest and Admin)
 **ResortOS AI — Restaurant Booking App**
 
-People using the web app (PWA) and the booking API directly. For the AI assistant (guest → AI → API) see [test_scenarios_assistant.md](test_scenarios_assistant.md). Strategy and tools: [testing_plan.md](testing_plan.md).
+People using the web app (PWA) and the booking API directly. For the AI assistant (guest → AI → API) see [TEST_SCENARIOS_ASSISTANT.md](TEST_SCENARIOS_ASSISTANT.md). Strategy and tools: [TESTING_PLAN.md](TESTING_PLAN.md).
 
 **Status:** ✅ automated and passing · 👁 checked by hand on the real stack (browser → web → API → database) · ⬜ to be tested
 
@@ -118,15 +118,15 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | T3 | **Other browsers**: Safari/WebKit, Firefox | Suite runs Chromium only | Add Playwright WebKit/Firefox projects |
 | T4 | **Accessibility audit** with axe and a screen reader (VoiceOver, TalkBack) | Roles and labels are tested, not the full experience | axe in Playwright + manual pass |
 | T5 | **Visual regression** of the main screens | Behaviour is tested, pixels aren't | Playwright `toHaveScreenshot()` |
-| T6 | **Load test**: 500 concurrent users at dinner time, p95 < 300 ms | testing_plan.md target, not yet measured | k6 or Artillery on staging |
+| T6 | **Load test**: 500 concurrent users at dinner time, p95 < 300 ms | TESTING_PLAN.md target, not yet measured | k6 or Artillery on staging |
 | T7 | **Real session expiry** (1 hour) | Expiry is simulated in UI tests | e2e with `SESSION_TTL=8s` |
 | T8 | **HTTPS deployment**: same-site session cookie, Origin rule, CORS, `TRUST_PROXY` | Only localhost so far | Staging smoke test |
 | T9 | **CSV opened in Excel / Google Sheets** | Formula neutralising is unit-tested, not opened in apps | Manual |
-| T10 | **Penetration test / OWASP ZAP scan** | security_spec.md requires one before launch | ZAP baseline on staging |
+| T10 | **Penetration test / OWASP ZAP scan** | SECURITY_SPEC.md requires one before launch | ZAP baseline on staging |
 | T11 | **UAT** with restaurant staff and a few guests | Real-world fit | Staging, guided session |
 
 ## 9. Real end-to-end coverage (no mocking)
-Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results with expected vs actual and videos: `resortos-booking-e2e/RESULTS.md`.
+Suite: `resortos-booking-e2e` ([E2E_SPEC.md](E2E_SPEC.md)). Latest results with expected vs actual and videos: `resortos-booking-e2e/RESULTS.md`.
 
 | Area | Scenario IDs run end to end | Latest run |
 |---|---|---|

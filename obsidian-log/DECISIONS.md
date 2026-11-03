@@ -17,7 +17,7 @@ date: 2026-11-03
 - **Simplicity:** Single source of truth for business rules; no need for application-level locking
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Database Review]]
+**Session:** [[SESSION_LOG/2026_11_03#Database Review]]
 
 **Related:**
 - Schema uses `@db.Timestamptz` for all timestamps (portable across timezones)
@@ -38,7 +38,7 @@ date: 2026-11-03
 - **KISS principle:** Prisma + Zod is the simpler, proven stack for TypeScript/Node
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Prisma vs. Zod Question]]
+**Session:** [[SESSION_LOG/2026_11_03#Prisma vs. Zod Question]]
 
 **User challenged this** (expected, healthy friction) but decided to keep Prisma after explanation.
 
@@ -55,7 +55,7 @@ date: 2026-11-03
 - User requirement
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Initial Request]]
+**Session:** [[SESSION_LOG/2026_11_03#Initial Request]]
 
 ---
 
@@ -70,7 +70,7 @@ date: 2026-11-03
 - Sufficient for v1 scope
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Backend Scaffolding Began]]
+**Session:** [[SESSION_LOG/2026_11_03#Backend Scaffolding Began]]
 
 ---
 
@@ -84,7 +84,7 @@ date: 2026-11-03
 - 7.10.1 is stable and battle-tested
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Backend Scaffolding Began]]
+**Session:** [[SESSION_LOG/2026_11_03#Backend Scaffolding Began]]
 
 ---
 
@@ -99,15 +99,15 @@ date: 2026-11-03
 - Aligns with KISS: validate design before implementation
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Critical Interrupt Code Before Design Review]]
+**Session:** [[SESSION_LOG/2026_11_03#Critical Interrupt Code Before Design Review]]
 
-**Lesson:** [[Learnings#1. Plan and Validate Design Before Coding]]
+**Lesson:** [[LEARNINGS#1. Plan and Validate Design Before Coding]]
 
 ---
 
 ## v1 Scope Boundaries Defined
 
-**Decision:** v1 IN/OUT scope codified in requirements/PRD_BOOKING_v1.md §3.
+**Decision:** v1 IN/OUT scope codified in requirements/PRD_BOOKING_V1.md §3.
 
 **IN (built for v1):**
 - Email/password authentication
@@ -133,7 +133,7 @@ date: 2026-11-03
 **Why:** KISS principle; concentrate on core happy path (reserve, reschedule, cancel, audit). Extended features create scope creep and complexity.
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Planning Docs Completed]]
+**Session:** [[SESSION_LOG/2026_11_03#Planning Docs Completed]]
 
 ---
 
@@ -148,9 +148,9 @@ date: 2026-11-03
 - Tailwind for utility-first styling (aligns with KISS)
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Planning Docs Completed]]
+**Session:** [[SESSION_LOG/2026_11_03#Planning Docs Completed]]
 
-**Note:** This was assumed open in earlier Open Questions but PRD fixed it; lesson recorded in [[Learnings#11]].
+**Note:** This was assumed open in earlier Open Questions but PRD fixed it; lesson recorded in [[LEARNINGS#11]].
 
 ---
 
@@ -166,28 +166,28 @@ date: 2026-11-03
 **Status:** Proposed by Claude; user has NOT confirmed. May be overridden if user expects API stability.
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Planning Docs Completed]]
+**Session:** [[SESSION_LOG/2026_11_03#Planning Docs Completed]]
 
-**Related:** [[Open Questions#API Versioning and Type Sharing]]
+**Related:** [[OPEN_QUESTIONS#API Versioning and Type Sharing]]
 
 ---
 
 ## TypeScript Type Sharing = Hand-Written (Proposed Default, Awaiting Confirmation)
 
-**Proposed:** Frontend hand-writes TypeScript types from api_spec.md (no shared npm package).
+**Proposed:** Frontend hand-writes TypeScript types from API_SPEC.md (no shared npm package).
 
 **Why:**
 - KISS — no monorepo or package publishing setup
-- api_spec.md is source of truth (structured Markdown)
+- API_SPEC.md is source of truth (structured Markdown)
 - Frontend types auto-sync with spec when spec changes
 - Keeps repos decoupled
 
 **Status:** Proposed by Claude; user has NOT confirmed. Alternative: shared @resortos/types package if user prefers DRY.
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Planning Docs Completed]]
+**Session:** [[SESSION_LOG/2026_11_03#Planning Docs Completed]]
 
-**Related:** [[Open Questions#API Versioning and Type Sharing]]
+**Related:** [[OPEN_QUESTIONS#API Versioning and Type Sharing]]
 
 ---
 
@@ -203,9 +203,9 @@ date: 2026-11-03
 - **Simplicity:** Single dependency; no Docker/Homebrew decisions needed
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]
 
-**Related:** Resolves [[Open Questions#Local Postgres Method|Local Postgres Method]] — Docker/brew still optional; PGlite is the standard.
+**Related:** Resolves [[OPEN_QUESTIONS#Local Postgres Method|Local Postgres Method]] — Docker/brew still optional; PGlite is the standard.
 
 ---
 
@@ -220,7 +220,7 @@ date: 2026-11-03
 - Saves space (one column, not two)
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]
 
 ---
 
@@ -235,7 +235,7 @@ date: 2026-11-03
 - antislop R-21 reason recorded in DESIGN.md
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]
 
 ---
 
@@ -260,7 +260,7 @@ date: 2026-11-03
 - Result: 62 Jest tests, 100% coverage metrics, codebase more maintainable
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
+**Session:** [[SESSION_LOG/2026_11_03#Test Gap Pass + Jest]]
 
 **Related:** In-memory PGlite on port 5498 for test isolation; npm test runs Playwright then Jest.
 
@@ -294,7 +294,7 @@ date: 2026-11-03
 - Offline booking/data stays out: availability changes constantly; don't cache stale tables
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+**Session:** [[SESSION_LOG/2026_11_03#Mobile-Only PWA]]
 
 ---
 
@@ -319,7 +319,7 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 - Admins no longer create bookings (read-only)
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+**Session:** [[SESSION_LOG/2026_11_03#Booking Assistant Built]]
 
 ---
 
@@ -344,7 +344,7 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 - Cost-effective for high-volume agent runs
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+**Session:** [[SESSION_LOG/2026_11_03#Booking Assistant Built]]
 
 ---
 
@@ -358,9 +358,9 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 - Production monitoring can track sign-in rates via 401 log
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]
+**Session:** [[SESSION_LOG/2026_11_03#Docs Round and Handoff]]
 
-**Recorded:** api_spec.md §8
+**Recorded:** API_SPEC.md §8
 
 ---
 
@@ -381,18 +381,18 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 **Status:** APPROVED, NOT YET IMPLEMENTED
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]
+**Session:** [[SESSION_LOG/2026_11_03#Docs Round and Handoff]]
 
-**Recorded:** security_spec.md §1, DIAGRAM.md §4
+**Recorded:** SECURITY_SPEC.md §1, DIAGRAM.md §4
 
 ---
 
 ## Spec Narrowed: Deleted Account 401 Only on GET /me (Sessions Stay Stateless)
 
-**Decision:** During Stage 3 Review the deleted-account 401 rule in `requirements/api_spec.md` was narrowed to `GET /me` only (root commit ecb583c), so sessions stay stateless.
+**Decision:** During Stage 3 Review the deleted-account 401 rule in `requirements/API_SPEC.md` was narrowed to `GET /me` only (root commit ecb583c), so sessions stay stateless.
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-04#Review Stage Complete (Stage 3)]]
+**Session:** [[SESSION_LOG/2026_11_04#Review Stage Complete (Stage 3)]]
 
 ---
 
@@ -400,7 +400,7 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 
 **Decision (orchestrator, 2026-11-03):** not fixed: trailing slash in `CORS_ORIGIN`; deleted account on `PATCH /me` (covered by the spec narrowing above); the tracked `coverage/` folder in the api repo.
 
-**Session:** [[Session Log/2026-11-04#Review Stage Complete (Stage 3)]]
+**Session:** [[SESSION_LOG/2026_11_04#Review Stage Complete (Stage 3)]]
 
 ---
 
@@ -409,7 +409,7 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 **Decision:** `npm audit --omit=dev` is 0 in every repo. The dev-only findings (api: 19 in the Jest tooling; web: 10 in vite-plugin-pwa) are left alone because clearing them needs breaking version changes.
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
+**Session:** [[SESSION_LOG/2026_11_04#Test Stage Complete (Stage 4)]]
 
 ---
 
@@ -418,4 +418,4 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 **Decision:** Video files (.mp4, .webm, .mov, .avi, .mkv, .m4v) are gitignored in all five repos. .gif is deliberately excluded (often used as doc images).
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04#Video Files Gitignored + History Audit]]
+**Session:** [[SESSION_LOG/2026_11_04#Video Files Gitignored + History Audit]]

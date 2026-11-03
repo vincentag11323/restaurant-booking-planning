@@ -1,7 +1,7 @@
 # Coding Standards: React Frontend
 **ResortOS AI — Restaurant Booking App**
 
-Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Screens and behaviour: `ui_spec.md`; look and feel: the repo's `DESIGN.md`.
+Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Screens and behaviour: `UI_SPEC.md`; look and feel: the repo's `DESIGN.md`.
 
 ## 1. Language and tooling
 * **TypeScript only** (`.ts` / `.tsx`), `"strict": true`. No `.js` / `.jsx` source files.
@@ -11,7 +11,7 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 ## 2. Folder layout
 | Folder | Holds | Must not |
 |---|---|---|
-| `src/types/` | **All shared types**: `api.ts` mirrors the booking API's request and response shapes (`api_spec.md`), `chat.ts` the assistant's | Hold code that runs |
+| `src/types/` | **All shared types**: `api.ts` mirrors the booking API's request and response shapes (`API_SPEC.md`), `chat.ts` the assistant's | Hold code that runs |
 | `src/backendApi/` | **All calls to the booking API.** `client.ts` is the one fetch wrapper (cookie, 401 handling, errors). One file per route group or resource (`auth.ts`, `users.ts`, `reservations.ts`, `menus.ts`, `availabilities.ts`, `admins.ts`) with one typed function per endpoint, e.g. `listMyReservations(): Promise<Reservation[]>` | Be skipped: pages never build API paths themselves |
 | `src/agentApi/` | All calls to the booking assistant (`/agent/chat`) | Share code with `backendApi` (no auth there) |
 | `src/auth/` | The session context (`GET /api/users/me` on load, sign-in, sign-out) | — |
@@ -48,7 +48,7 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 ## 7. Testing
 * Test first. Playwright tests in `tests/e2e/` run against the mocked API (`tests/e2e/mockApi.ts`), phone viewport.
 * Find elements the way a user would: by role and visible text, not CSS classes.
-* Each test names its scenario ID from `test_scenarios_app.md`.
+* Each test names its scenario ID from `TEST_SCENARIOS_APP.md`.
 * When an API path changes, change it in `src/backendApi/` and in `mockApi.ts`, nowhere else.
 
 ## 8. Git

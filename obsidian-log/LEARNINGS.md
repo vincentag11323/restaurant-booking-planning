@@ -166,7 +166,7 @@ Lessons about how to work with this user and project.
 - Affects git organization
 
 **How to apply:**
-- Ask user to clarify on next session (see [[Open Questions#Root Repo vs Backend Docs]])
+- Ask user to clarify on next session (see [[OPEN_QUESTIONS#Root Repo vs Backend Docs]])
 - If docs should be inside backend: move obsidian-log/ and requirements/ into backend repo
 - If root repo is correct: document why (e.g., "docs are shared between backend and frontend")
 
@@ -196,7 +196,7 @@ Lessons about how to work with this user and project.
 
 **Why:**
 - Earlier log listed "Frontend Framework Choice" and "v1 Feature Scope" as open
-- But the original PRD fixed React 19 + Vite + Tailwind, and user explicitly asked for v1 IN/OUT in PRD_BOOKING_v1.md
+- But the original PRD fixed React 19 + Vite + Tailwind, and user explicitly asked for v1 IN/OUT in PRD_BOOKING_V1.md
 - Speculating creates false blockers, clogs the open questions list, and suggests those items need discussion when they don't
 - Erodes credibility: "I know React was already decided, but I'll ask anyway?"
 
@@ -310,7 +310,7 @@ Lessons about how to work with this user and project.
 - Test forms, tables, drawers at phone width
 - If a test fails on mobile only, it's a real bug; prioritize it
 
-**Session:** [[Session Log/2026-11-03#Build Phase]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]
 
 ---
 
@@ -330,7 +330,7 @@ Lessons about how to work with this user and project.
 - Mark such fixes as unverified-by-concurrent-test in commit messages or code review
 - If possible, note where the race *would* happen on real Postgres (reschedule UPDATE before acquiring lock on CONFIRMED row)
 
-**Session:** [[Session Log/2026-11-03#Review Round and Finish]]
+**Session:** [[SESSION_LOG/2026_11_03#Review Round and Finish]]
 
 ---
 
@@ -351,7 +351,7 @@ Lessons about how to work with this user and project.
 - Downgrade findings if the behavior doesn't match the severity claim
 - Trust reviewer reasoning, but verify impact independently
 
-**Session:** [[Session Log/2026-11-03#Review Round and Finish]]
+**Session:** [[SESSION_LOG/2026_11_03#Review Round and Finish]]
 
 ---
 
@@ -371,7 +371,7 @@ Lessons about how to work with this user and project.
 - Pattern: `useEffect(() => { let current = true; fetch(...).then(data => { if (current) setState(data); }); return () => { current = false; }; }, [filter])`
 - Test with slow network (throttle in DevTools) and rapid filter changes
 
-**Session:** [[Session Log/2026-11-03#Review Round and Finish]]
+**Session:** [[SESSION_LOG/2026_11_03#Review Round and Finish]]
 
 ---
 
@@ -393,7 +393,7 @@ Lessons about how to work with this user and project.
 - Example: instead of `if (!sectors.length) return 0; return sectors.reduce(...)`, build from sectors directly
 - Result: code is shorter, simpler, and provably correct
 
-**Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
+**Session:** [[SESSION_LOG/2026_11_03#Test Gap Pass + Jest]]
 
 ---
 
@@ -414,7 +414,7 @@ Lessons about how to work with this user and project.
 - Example fix: `express-rate-limit({ message: JSON.stringify({ message: 'Rate limit exceeded' }) })`
 - Automate this in tests: every error path should return valid JSON
 
-**Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
+**Session:** [[SESSION_LOG/2026_11_03#Test Gap Pass + Jest]]
 
 ---
 
@@ -434,7 +434,7 @@ Lessons about how to work with this user and project.
 - Verify precache size after each font/asset add (check .vite/manifest.json or Lighthouse audit)
 - Don't assume dev-mode behavior matches production; always verify against build output
 
-**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+**Session:** [[SESSION_LOG/2026_11_03#Mobile-Only PWA]]
 
 ---
 
@@ -455,7 +455,7 @@ Lessons about how to work with this user and project.
 - Test on a real device or with Playwright `page.goto(...); expect(page.locator('h1')).toBeFocused()`
 - Note: focusing an unfocusable element (tabIndex={-1}) still scrolls to it
 
-**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+**Session:** [[SESSION_LOG/2026_11_03#Mobile-Only PWA]]
 
 ---
 
@@ -477,7 +477,7 @@ Lessons about how to work with this user and project.
 - Use `woff2` (smaller than woff, supported in all modern browsers)
 - Re-check after every significant asset add (icons, new font, large image)
 
-**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+**Session:** [[SESSION_LOG/2026_11_03#Mobile-Only PWA]]
 
 ---
 
@@ -498,7 +498,7 @@ Lessons about how to work with this user and project.
 - Always preserve the final summary line showing calls spent, cost, pass/fail
 - Log the call count explicitly in reports for budget-constrained tasks
 
-**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+**Session:** [[SESSION_LOG/2026_11_03#Booking Assistant Built]]
 
 ---
 
@@ -519,7 +519,7 @@ Lessons about how to work with this user and project.
 - Regression test prevents the bug from recurring when gateway updates
 - Only run live end-to-end after unit test passes
 
-**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+**Session:** [[SESSION_LOG/2026_11_03#Booking Assistant Built]]
 
 ---
 
@@ -542,7 +542,7 @@ Lessons about how to work with this user and project.
 - Fix the cause: here, scope the query to the alert's own reason. Tests sharing one database are intended; give each its own dates/emails
 - Mark state-coupled bugs as high priority (they hide until conditions align)
 
-**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+**Session:** [[SESSION_LOG/2026_11_03#Booking Assistant Built]]
 
 ---
 
@@ -563,7 +563,7 @@ Lessons about how to work with this user and project.
 - Document which tools have code-driven exits (proposeBooking, notSupportedYet)
 - Test all refusal paths: booking limit, rule break, unsupported request
 
-**Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
+**Session:** [[SESSION_LOG/2026_11_03#Real End-to-End Suite]]
 
 ---
 
@@ -584,7 +584,7 @@ Lessons about how to work with this user and project.
 - Document expected latency (3 s typical, 10 s max acceptable)
 - Treat provider slowness as a production incident; rate-limit or disable assistant
 
-**Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
+**Session:** [[SESSION_LOG/2026_11_03#Real End-to-End Suite]]
 
 ---
 
@@ -604,7 +604,7 @@ Lessons about how to work with this user and project.
 - Test: check errors.log after a typical session; should be nearly empty
 - Monitor: alert if error rate spikes; production failures should stand out
 
-**Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
+**Session:** [[SESSION_LOG/2026_11_03#Real End-to-End Suite]]
 
 ---
 
@@ -620,7 +620,7 @@ Lessons about how to work with this user and project.
 
 **Context:** Two guests confirming a booking for the same email (assistant's second attempt) returned 500. Fixed with INSERT ... ON CONFLICT DO NOTHING.
 
-**Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
+**Session:** [[SESSION_LOG/2026_11_03#To-be-Tested Round + Chat UI]]
 
 ---
 
@@ -636,7 +636,7 @@ Lessons about how to work with this user and project.
 
 **Context:** Fixed currency formatting to Rp 320.000 everywhere (manual template, not Intl).
 
-**Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
+**Session:** [[SESSION_LOG/2026_11_03#To-be-Tested Round + Chat UI]]
 
 ---
 
@@ -654,7 +654,7 @@ Lessons about how to work with this user and project.
 - ✗ `useEffect(() => setState(value), [])`
 - ✓ `useEffect(() => { setState(value); }, [])`
 
-**Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
+**Session:** [[SESSION_LOG/2026_11_03#To-be-Tested Round + Chat UI]]
 
 ---
 
@@ -674,7 +674,7 @@ Lessons about how to work with this user and project.
 - If you need subset results preserved, save the full RESULTS.md before running subsets
 - Document in test scripts which reporter is used for what
 
-**Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
+**Session:** [[SESSION_LOG/2026_11_04#Test Stage Complete (Stage 4)]]
 
 ---
 
@@ -695,7 +695,7 @@ Lessons about how to work with this user and project.
 - Save raw output to a file, strip codes, then grep
 - When debugging test output, assume codes are there until verified
 
-**Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
+**Session:** [[SESSION_LOG/2026_11_04#Test Stage Complete (Stage 4)]]
 
 ---
 
@@ -716,4 +716,4 @@ Lessons about how to work with this user and project.
 - Then decide: add to .gitignore (safe) vs. rewrite history (risky)
 - Document the audit result in session log to avoid re-scanning later
 
-**Session:** [[Session Log/2026-11-04#Video Files Gitignored + History Audit]]
+**Session:** [[SESSION_LOG/2026_11_04#Video Files Gitignored + History Audit]]

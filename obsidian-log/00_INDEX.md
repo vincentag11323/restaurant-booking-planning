@@ -8,11 +8,11 @@ date: 2026-11-03
 Claude's running log, learnings, and decisions for the ResortOS restaurant booking project.
 
 ## Navigation
-- [[Session Log/2026-11-04]] — Today's chronological notes
-- [[Session Log/2026-11-03]] — Previous session
-- [[Learnings]] — Lessons about this project and user
-- [[Decisions]] — Architecture and tool choices
-- [[Open Questions]] — Unresolved items blocking progress
+- [[SESSION_LOG/2026_11_04]] — Today's chronological notes
+- [[SESSION_LOG/2026_11_03]] — Previous session
+- [[LEARNINGS]] — Lessons about this project and user
+- [[DECISIONS]] — Architecture and tool choices
+- [[OPEN_QUESTIONS]] — Unresolved items blocking progress
 
 ## Quick Facts
 - **Project:** Restaurant reservation booking system (TypeScript full-stack)

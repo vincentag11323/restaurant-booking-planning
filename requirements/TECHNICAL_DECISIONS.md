@@ -30,7 +30,7 @@ The real alternative was **Zod + raw SQL (`pg`)**. Prisma was kept because:
 
 Accepted costs: a `prisma generate` step and the Prisma 7 driver-adapter setup (`@prisma/adapter-pg`). Version is **pinned to 7.10.1** because npm's `latest` tag currently points to an 8.0 release candidate. Postgres-specific features (the audit-log trigger) live in a hand-edited SQL migration.
 
-### 1.2 Schema rules (see `data_model.md`)
+### 1.2 Schema rules (see `DATA_MODEL.md`)
 * All timestamps use `@db.Timestamptz` (Prisma's default `timestamp` has no time zone).
 * Reservations get a short unique human code (`RSV-` + 6 chars from an unambiguous alphabet), so guests can read it out to the host. The internal `cuid` stays the primary key.
 * In production, the app's DB role gets `INSERT, SELECT` only on `AuditLog`, in addition to the immutability trigger.
@@ -53,4 +53,4 @@ Accepted costs: a `prisma generate` step and the Prisma 7 driver-adapter setup (
 * `401` / `403` for missing/invalid tokens and wrong roles. These are unavoidable with auth, so they are added to the PRD's list.
 
 ## 4. Scope and repositories
-What v1 builds and deliberately leaves out is defined once, in [PRD_BOOKING_v1.md](PRD_BOOKING_v1.md) §3. Repository layout and stacks: PRD v1 §4.1 and each repo's README. The AI booking assistant's design is [agent_spec.md](agent_spec.md).
+What v1 builds and deliberately leaves out is defined once, in [PRD_BOOKING_V1.md](PRD_BOOKING_V1.md) §3. Repository layout and stacks: PRD v1 §4.1 and each repo's README. The AI booking assistant's design is [AGENT_SPEC.md](AGENT_SPEC.md).

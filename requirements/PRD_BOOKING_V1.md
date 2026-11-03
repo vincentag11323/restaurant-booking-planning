@@ -4,7 +4,7 @@
 **Role Focus:** User (Diner App), Admin (Booking Logs Only)  
 **Tech Stack:** 100% TypeScript | Express.js API | React Frontend (Decoupled 2 Repositories)
 
-> This document is the **build contract for v1**. `PRD_BOOKING.md` remains the full product vision. If the two conflict, this document wins for v1. Concrete numbers and rules live in `technical_decisions.md`.
+> This document is the **build contract for v1**. `PRD_BOOKING.md` remains the full product vision. If the two conflict, this document wins for v1. Concrete numbers and rules live in `TECHNICAL_DECISIONS.md`.
 
 ---
 
@@ -46,10 +46,10 @@ ResortOS AI lets restaurant guests (Users) browse the menu, reserve tables and m
 | | Booking log table with filters (branch, date range, status, sector) and search (name, email, phone, reservation code) | Paginated |
 | | Detail drawer | |
 | | Export filtered log to CSV / JSON | Audited. A >1,000-row export raises an alert |
-| **Security & Audit** | RBAC (USER / ADMIN), IDOR protection (404 on others' records), rate-limited auth, Zod validation, helmet, CORS | See `security_spec.md` |
-| | Immutable `AuditLog` table + failed-login & bulk-export alerts (logged) | See `audit_trail.md` |
+| **Security & Audit** | RBAC (USER / ADMIN), IDOR protection (404 on others' records), rate-limited auth, Zod validation, helmet, CORS | See `SECURITY_SPEC.md` |
+| | Immutable `AuditLog` table + failed-login & bulk-export alerts (logged) | See `AUDIT_TRAIL.md` |
 | **App shell** | Mobile-first installable PWA: web manifest, home-screen icons, cached app shell, clear offline message | Single-column phone layout with bottom tab bar. API data is always fetched live, never cached (added 2026-11-03) |
-| **Quality** | Playwright API suite (backend) + Playwright UI suite with mocked API (frontend) + unit tests of slot/allocation logic | See `testing_plan.md` |
+| **Quality** | Playwright API suite (backend) + Playwright UI suite with mocked API (frontend) + unit tests of slot/allocation logic | See `TESTING_PLAN.md` |
 
 ### 3.2 ❌ OUT OF SCOPE — We are NOT building in v1
 
@@ -92,7 +92,7 @@ ResortOS AI lets restaurant guests (Users) browse the menu, reserve tables and m
   * `401 Unauthorized` / `403 Forbidden`: missing/invalid token, wrong role.
   * `404 Not Found`: reservation does not exist **or** belongs to another guest.
   * `200 OK` / `201 Created`: success.
-* Full endpoint list: `api_spec.md`.
+* Full endpoint list: `API_SPEC.md`.
 
 ### 4.3 Quality Assurance & Playwright Testing
 * **API Suite:** full CRUD cycle, 2.5-hour slot computation, capacity/allocation, 400/401/403/404 triggers, IDOR.

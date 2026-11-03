@@ -20,8 +20,8 @@ Unresolved items that need user input or research before proceeding.
 - Production safety: real Postgres ensures dev/prod parity
 
 **Date resolved:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]  
-**Decision:** [[Decisions#PGlite for Local Dev + Tests; Real Postgres for Production]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]  
+**Decision:** [[DECISIONS#PGlite for Local Dev + Tests; Real Postgres for Production]]
 
 **Note:** Docker/Homebrew remain optional for users who prefer them; PGlite is the standard.
 
@@ -32,7 +32,7 @@ Unresolved items that need user input or research before proceeding.
 **Resolution:** User installed antislop (mode DURING) and mattpocock-skills (grill-me, grill-with-docs are user-invoked only; tdd, grilling, domain-modeling, code-review usable by agent).
 
 **Date resolved:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]
 
 ---
 
@@ -46,7 +46,7 @@ Unresolved items that need user input or research before proceeding.
 Docs live in root repo, shared reference for backend and frontend.
 
 **Date resolved:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]
 
 ---
 
@@ -57,10 +57,10 @@ Docs live in root repo, shared reference for backend and frontend.
 - Type sharing: each repo maintains its own types folder (no shared npm package)
 
 **Date resolved:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Build Phase]]  
+**Session:** [[SESSION_LOG/2026_11_03#Build Phase]]  
 **Related decisions:**
-- [[Decisions#API Unversioned (Proposed Default, Awaiting Confirmation)]]
-- [[Decisions#TypeScript Type Sharing = Hand-Written (Proposed Default, Awaiting Confirmation)]]
+- [[DECISIONS#API Unversioned (Proposed Default, Awaiting Confirmation)]]
+- [[DECISIONS#TypeScript Type Sharing = Hand-Written (Proposed Default, Awaiting Confirmation)]]
 
 ---
 
@@ -79,11 +79,11 @@ Docs live in root repo, shared reference for backend and frontend.
 - Clear expiry prevents stale sessions
 - API key authenticates agent without user context
 
-**Recorded:** security_spec.md §1, DIAGRAM.md §4
+**Recorded:** SECURITY_SPEC.md §1, DIAGRAM.md §4
 
 **Date:** 2026-11-03  
-**Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]  
-**Decision:** [[Decisions#Fixed 1-Hour Cookie Session, No Refresh Token, Agent API Key (Owner Approved, Pending Implementation)]]
+**Session:** [[SESSION_LOG/2026_11_03#Docs Round and Handoff]]  
+**Decision:** [[DECISIONS#Fixed 1-Hour Cookie Session, No Refresh Token, Agent API Key (Owner Approved, Pending Implementation)]]
 
 ---
 
@@ -96,7 +96,7 @@ Docs live in root repo, shared reference for backend and frontend.
 **Decision (owner, 2026-11-04):** No. The 401 already sends them to sign in; keep it simple.
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04]]
+**Session:** [[SESSION_LOG/2026_11_04]]
 
 ---
 
@@ -111,7 +111,7 @@ Docs live in root repo, shared reference for backend and frontend.
 **Decision (owner, 2026-11-04):** Critical; must be fixed. Plan first, explained to the owner before any code.
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04]]
+**Session:** [[SESSION_LOG/2026_11_04]]
 
 ---
 
@@ -124,7 +124,7 @@ Docs live in root repo, shared reference for backend and frontend.
 **Fix (if wanted):** have the reporter pick the largest or the main `video.webm` attachment.
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04]]
+**Session:** [[SESSION_LOG/2026_11_04]]
 
 ---
 
@@ -139,7 +139,7 @@ Docs live in root repo, shared reference for backend and frontend.
 **Fix (if wanted):** rename one of them to an ID not already used in the scenario docs.
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04]]
+**Session:** [[SESSION_LOG/2026_11_04]]
 
 ---
 
@@ -152,4 +152,4 @@ Docs live in root repo, shared reference for backend and frontend.
 **Decision (owner, 2026-11-04):** Done. api and agent `.env` now have a random `SESSION_SECRET` and a shared random `AGENT_API_KEY`; old `JWT_*`, `AGENT_EMAIL`, `AGENT_PASSWORD` removed; local DB migrated and seeded.
 
 **Date:** 2026-11-04  
-**Session:** [[Session Log/2026-11-04]]
+**Session:** [[SESSION_LOG/2026_11_04]]

@@ -125,7 +125,7 @@ PK `(reservationId, tableId)`. **`UNIQUE (tableId, slotStart)`** is the double-b
 | `id` | bigint | PK, autoincrement |
 | `timestamp` | timestamptz | default now |
 | `actorId` | text? | no FK, so logs outlive users |
-| `action` | text | see `audit_trail.md` |
+| `action` | text | see `AUDIT_TRAIL.md` |
 | `resourceId` | text? | |
 | `ipAddress` / `userAgent` | text? | |
 | `metadata` | jsonb? | never contains passwords/tokens |

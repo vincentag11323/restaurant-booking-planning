@@ -4,10 +4,10 @@
 **Route names are plural** (owner rule, 2026-11-04; exceptions: `public`, `auth`, action words, `health`, `me`, `stats`).  
 Base URL: `/api`. Paths in the tables below are relative to it (e.g. `/public/menus` is `/api/public/menus`). JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
 
-**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production). Its value is a long random token; the server stores only its SHA-256, in the `Session` table (`data_model.md`). A session lasts **1 hour from sign-in** and is never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>`, checked against the `ApiKey` table (SHA-256 only, `data_model.md`). `Authorization: Bearer` is not accepted.  
+**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production). Its value is a long random token; the server stores only its SHA-256, in the `Session` table (`DATA_MODEL.md`). A session lasts **1 hour from sign-in** and is never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>`, checked against the `ApiKey` table (SHA-256 only, `DATA_MODEL.md`). `Authorization: Bearer` is not accepted.  
 **When a session ends:** (1) **sign-out** deletes its `Session` row, so that cookie, and any copy of it, is refused from the next request on; (2) **time**: once `expiresAt` (sign-in + 1 hour) has passed the row no longer counts, so the session ends by itself with no job or timer. Removing a user removes their sessions and API key (cascade). An ended session gets `401 Invalid or expired token` on every route that needs sign-in.  
 **CSRF:** `SameSite=Lax` plus an origin rule: a request other than GET/HEAD/OPTIONS whose `Origin` header isn't `CORS_ORIGIN` gets `403 Cross-origin request blocked`.  
-**Errors:** always `{ "message": string }`, using 400 / 401 / 403 / 404 (see `PRD_BOOKING_v1.md` §4.2).
+**Errors:** always `{ "message": string }`, using 400 / 401 / 403 / 404 (see `PRD_BOOKING_V1.md` §4.2).
 
 Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN · 🤖 AGENT (the AI booking assistant's service account)
 

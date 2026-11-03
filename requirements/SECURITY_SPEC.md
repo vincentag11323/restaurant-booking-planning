@@ -9,18 +9,18 @@ The app stores guest personal data (name, email, phone number, allergy informati
 > * Guests and admins: **one HttpOnly session cookie, fixed 1 hour from sign-in** (not extended by activity), then signed out. `SameSite=Lax`, `Secure` in production. No access token in memory, no refresh token, no `/api/auth/refresh`, no `ACCESS_TOKEN_TTL`.
 > * PWA: **no idle timer.** When the session ends, screens keep the data they already show; the next server call returns 401 and the app goes to sign-in.
 > * AI assistant: a **predefined API key** (`AGENT_API_KEY`) created at seeding; only its hash is stored. Sent as `X-Agent-Key`; maps to role `AGENT` with the same two permissions. No agent password.
-> * Keep CSRF safe with `SameSite=Lax` + the CORS origin rule, and add a test for it. Update api_spec.md, DIAGRAM.md, READMEs and every test helper that sends `Authorization: Bearer`.
+> * Keep CSRF safe with `SameSite=Lax` + the CORS origin rule, and add a test for it. Update API_SPEC.md, DIAGRAM.md, READMEs and every test helper that sends `Authorization: Bearer`.
 
 > **Owner request 2026-11-04: server-side sessions and an API key table.**
 > * Sign-out must end the session **at once**: a copied cookie stops working. Sessions live in a `Session` table; the cookie holds a random token and only its SHA-256 is stored. Expiry (1 hour from sign-in) ends a session by itself.
 > * The assistant's key lives in an `ApiKey` table (SHA-256 only). For now one key, owned by the one `AGENT` account; other key owners (vendors, special users) are to be decided later.
-> * Routes are grouped, each with its own middleware (`api_spec.md`, "Route groups"): `/api/public/*` has none (menu, availability, health; the assistant may use them), `/api/users/*` and `/api/admins/*` run the sign-in check, `/api/agents/*` runs the agent key check. Each check passes `{ userId, role }` to the route.
+> * Routes are grouped, each with its own middleware (`API_SPEC.md`, "Route groups"): `/api/public/*` has none (menu, availability, health; the assistant may use them), `/api/users/*` and `/api/admins/*` run the sign-in check, `/api/agents/*` runs the agent key check. Each check passes `{ userId, role }` to the route.
 > * `SESSION_SECRET` and JWTs are no longer used.
 
-* **Role-Based Access Control (RBAC):** Three roles, `USER`, `ADMIN` and `AGENT` (the AI booking assistant, planned in `agent_spec.md` §5.5). Routes check permissions; `AGENT` may only book on a guest's behalf and look up one guest by exact email.
+* **Role-Based Access Control (RBAC):** Three roles, `USER`, `ADMIN` and `AGENT` (the AI booking assistant, planned in `AGENT_SPEC.md` §5.5). Routes check permissions; `AGENT` may only book on a guest's behalf and look up one guest by exact email.
   * Guests can only see and change **their own** reservations and profile. Requesting another guest's reservation returns `404 Not Found`, so record IDs cannot be probed.
   * Admins have **read-only** access to all reservations, stats and exports. There is no admin endpoint that creates, edits or deletes bookings.
-* **Session Management:** sign-in creates a `Session` row (`data_model.md`) and sets the `session` cookie to a random 32-byte token; only its SHA-256 is stored. Every request looks the row up: it counts only while `expiresAt` (sign-in + 1 hour, never extended) is in the future. Sign-out deletes the row, so the cookie and any copy are refused at once. The agent key is checked against `ApiKey.keyHash` (SHA-256) on each call, and only a key owned by the `AGENT` account is accepted.
+* **Session Management:** sign-in creates a `Session` row (`DATA_MODEL.md`) and sets the `session` cookie to a random 32-byte token; only its SHA-256 is stored. Every request looks the row up: it counts only while `expiresAt` (sign-in + 1 hour, never extended) is in the future. Sign-out deletes the row, so the cookie and any copy are refused at once. The agent key is checked against `ApiKey.keyHash` (SHA-256) on each call, and only a key owned by the `AGENT` account is accepted.
 * **CSRF:** `SameSite=Lax` keeps the cookie off cross-site POSTs; non-GET requests with a foreign `Origin` header get `403`. The web app and the API must be on the same site (e.g. `app.example.com` + `api.example.com`).
 * **Brute-force protection:** Rate limiting on `/api/auth/*` (20 requests / 15 minutes / IP).
 * **MFA:** *Future enhancement* for Admin logins. Not in v1, to keep scope small.

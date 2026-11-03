@@ -26,7 +26,7 @@ Which agent skills are used, **when**, and **what they may not do**. **How each 
    committed           committed               committed                  committed
 ```
 
-A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase ends with a **git commit**.
+A feature = one ✅ row of `requirements/PRD_BOOKING_V1.md` §3.1. Every phase ends with a **git commit**.
 
 ## 3. Skills — Purpose, Trigger, Boundaries
 
@@ -37,16 +37,16 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 * **Boundaries:** Asks; never decides scope on its own. Never writes code.
 
 ### 3.2 spec-driven-development — *Phase 1*
-* **Purpose:** Specs are the source of truth. `data_model.md` → `schema.prisma`, `api_spec.md` → routes + Zod schemas + tests, `ui_spec.md` → screens.
+* **Purpose:** Specs are the source of truth. `DATA_MODEL.md` → `schema.prisma`, `API_SPEC.md` → routes + Zod schemas + tests, `UI_SPEC.md` → screens.
 * **Trigger:** Before writing a route, schema or screen.
 * **Boundaries:** No endpoint, column or screen that isn't in a spec. If one is needed: update the spec → commit → then code. Never build ❌ items from PRD v1 §3.2.
 
 ### 3.3 test-driven-development — *Phase 2*
-* **Purpose:** Red → green with **Playwright only** (`@playwright/test`), one vertical slice at a time. Agreed seams (from `testing_plan.md`): pure slot/allocation functions, the HTTP API, and the rendered UI with a mocked API.
+* **Purpose:** Red → green with **Playwright only** (`@playwright/test`), one vertical slice at a time. Agreed seams (from `TESTING_PLAN.md`): pure slot/allocation functions, the HTTP API, and the rendered UI with a mocked API.
   * Backend: `tests/unit/*.spec.ts` (pure slot/allocation logic) → `tests/api/*.spec.ts` (real API + test DB).
   * Frontend: `tests/e2e/*.spec.ts` with the API mocked via `page.route`.
 * **Trigger:** Every behaviour change.
-* **Boundaries:** Write the failing test first and commit with the implementation. Tests assert exact status codes + `message` strings from `api_spec.md`. Don't weaken or delete a test to make it pass. Frameworks: Playwright for behaviour in both repos; Jest (backend only, owner request 2026-11-03) keeps `src/` at 100% coverage. Never lower the threshold or add coverage-ignore comments; remove unreachable code instead.
+* **Boundaries:** Write the failing test first and commit with the implementation. Tests assert exact status codes + `message` strings from `API_SPEC.md`. Don't weaken or delete a test to make it pass. Frameworks: Playwright for behaviour in both repos; Jest (backend only, owner request 2026-11-03) keeps `src/` at 100% coverage. Never lower the threshold or add coverage-ignore comments; remove unreachable code instead.
 
 ### 3.4 code-simplify — *Phase 3*
 * **Purpose:** Enforce KISS after green: remove dead code, needless abstractions and duplication without changing behaviour.
@@ -68,7 +68,7 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 ## 4. Haiku Obsidian Logger
 * **Agent:** a subagent running on **Claude Haiku** (`model: haiku`), spawned by the main agent.
 * **Vault:** `obsidian-log/` (open this folder as an Obsidian vault).
-  * `00 Index.md` (home) · `Session Log/YYYY-MM-DD.md` (chronological) · `Decisions.md` · `Learnings.md` · `Open Questions.md`
+  * `00 Index.md` (home) · `SESSION_LOG/YYYY-MM-DD.md` (chronological) · `Decisions.md` · `Learnings.md` · `Open Questions.md`
 * **When:** After every commit-worthy milestone, and at the end of each session.
 * **Boundaries:** Writes **only** inside `obsidian-log/`. **Never runs git** (the main agent commits the log). Records facts given by the main agent and does not speculate.
 
@@ -89,4 +89,4 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 3. **100% TypeScript.** No `.js` source files.
 4. **Commit as you go:** small conventional commits (`feat:`, `test:`, `docs:`, `refactor:`). Local only, no pushing. The user connects GitHub.
 5. Original user docs (`PRD_BOOKING.md`, Bahasa files) are never edited. New docs are created instead.
-6. Never build anything listed as ❌ OUT OF SCOPE in `PRD_BOOKING_v1.md`.
+6. Never build anything listed as ❌ OUT OF SCOPE in `PRD_BOOKING_V1.md`.

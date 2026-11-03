@@ -6,7 +6,7 @@
 ## 1. Rule: no mocking
 Every test drives the **real stack**: a real browser on the PWA's production build → the real booking API → a real database, and for the assistant, real `POST /chat` → the real agent → the **real AI model** (Cent AI, `deepseek-v4.1-flash`) → the real API. Nothing is faked. The per-repo mocked tests stay as the fast checks; this suite is the proof.
 
-Scenarios come from [test_scenarios_app.md](test_scenarios_app.md) and [test_scenarios_assistant.md](test_scenarios_assistant.md). **A test exists only for a scenario listed there** (no spec, no work). Test titles start with the scenario ID, e.g. `[B1] …`.
+Scenarios come from [TEST_SCENARIOS_APP.md](TEST_SCENARIOS_APP.md) and [TEST_SCENARIOS_ASSISTANT.md](TEST_SCENARIOS_ASSISTANT.md). **A test exists only for a scenario listed there** (no spec, no work). Test titles start with the scenario ID, e.g. `[B1] …`.
 
 ## 2. How a run works (`npm test` in the e2e repo)
 Playwright starts the stack from each repo's own scripts, on ports that don't clash with dev servers:
