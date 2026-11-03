@@ -543,3 +543,65 @@ Lessons about how to work with this user and project.
 - Mark state-coupled bugs as high priority (they hide until conditions align)
 
 **Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+
+---
+
+## 29. Early-Exit Loops Must Not Depend on Model to Explain Tool Failure
+
+**Rule:** If a tool loop stops early after a tool (not after model reasoning), the model will never explain that tool's failure. Send the tool's refusal verbatim from code.
+
+**Why:**
+- proposeBooking tool returns refusals (rule breaks, booking limits)
+- Model loop stops after that tool; doesn't generate a response
+- Guest never sees why the booking failed
+- Test: "Did you book me?" → silence (no refusal, no alternatives)
+
+**How to apply:**
+- Pattern: if tool returns refusal → send it directly, don't wait for model
+- Pseudo-code: `if (result.type === 'refusal') return sendToGuest(result.message);`
+- Don't rely on model to explain; it won't run
+- Document which tools have code-driven exits (proposeBooking, notSupportedYet)
+- Test all refusal paths: booking limit, rule break, unsupported request
+
+**Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
+
+---
+
+## 30. Always Put a Deadline on External AI Calls; Providers Degrade by 10x
+
+**Rule:** Add a per-turn timeout on AI model calls. Providers can slow down by 10x without degrading service gracefully.
+
+**Why:**
+- Cent AI DeepSeek: direct ping took 31 s (one word response) vs. earlier 3.3 s (9.4x slowdown)
+- Input tokens reported: 2,036 for a six-word prompt vs. earlier 27 (75x)
+- No refusal; call just hangs
+- Real E2E run skipped 8 assistant scenarios because of timeouts
+
+**How to apply:**
+- Add a per-turn timeout: 25 s limit (abort call, answer "I'm busy, try again later")
+- Monitor first-token latency in production logs
+- If timeouts keep happening: check the provider's status and latency first (here a direct ping took 31 s); no fallback model exists yet
+- Document expected latency (3 s typical, 10 s max acceptable)
+- Treat provider slowness as a production incident; rate-limit or disable assistant
+
+**Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
+
+---
+
+## 31. Decide What Counts as "Failure" Before Logging All Failures
+
+**Rule:** Logging "all failures" (4xx/5xx) captures expected errors like anonymous session checks (401). Decide what counts as a failure before shipping the log; otherwise, expected 401s fill the log with noise in production.
+
+**Why:**
+- Every signed-out page load checks session: 401 response is expected, not a failure
+- Backend logs every 4xx/5xx to errors.log
+- Production log fills with 401s from anonymous users
+- Hard to find real failures (500, 429, timeouts) in the noise
+
+**How to apply:**
+- Owner rule: every 4xx/5xx is logged. The one known noise source is the anonymous session check (401 on /api/auth/refresh); whether to exclude it is the owner's decision, not yet made
+- Or: log with severity (DEBUG for 401, ERROR for 5xx)
+- Test: check errors.log after a typical session; should be nearly empty
+- Monitor: alert if error rate spikes; production failures should stand out
+
+**Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
