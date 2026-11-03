@@ -43,6 +43,7 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 ## 6. Naming and style
 * **camelCase everywhere (owner rule, 2026-11-04), never snake_case or kebab-case:** file names (`errorLog.ts`, `bookingApi.ts`, `routeRules.test.ts`), folders inside a repo, functions, variables, object keys, JSON fields, query parameters, database columns. Types, classes and React components are PascalCase.
 * **The only exception is UPPER_SNAKE_CASE** (always fully upper case), used for **constants** (`MAX_PARTY_SIZE`, `SLOT_START_TIMES`, `SESSION_COOKIE`) and for data that leaves the code, where renaming would break stored rows or the API contract: environment variable names (`DATABASE_URL`), database enum values sent over the API (`MAIN_HALL`, `BRANCH_1`, `NO_SHOW`), and audit / log action names (`CREATE_RESERVATION`, `USER_CREATED`). Repo names (`resortos-booking-api`) and npm script names stay as they are.
+* **Every `.md` file name is UPPER_SNAKE_CASE** (`README.md`, `API_SPEC.md`, `docs/DATABASE.md`).
 * One clear name per file (`tokens.ts`, `permissions.ts`).
 * Small functions with one job. Prefer early returns over deep nesting.
 * Comments say **why**, not what. No commented-out code.
