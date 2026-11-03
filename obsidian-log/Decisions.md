@@ -236,3 +236,30 @@ date: 2026-11-03
 
 **Date:** 2026-11-03  
 **Session:** [[Session Log/2026-11-03#Build Phase]]
+
+---
+
+## Backend Jest for 100% Coverage (Owner Request)
+
+**Decision:** Add Jest + @swc/jest + supertest alongside Playwright for 100% statement/branch/function/line coverage on backend source (excluding generated code).
+
+**Why:**
+- Owner requested comprehensive unit test coverage
+- Playwright tests API contracts; Jest tests internal logic, error paths, edge cases
+- 100% branch coverage (not just statement) surfaces dead defensive code
+- Threshold enforced in CI; no coverage-ignore comments allowed (fix the code instead)
+
+**Stack choice: @swc/jest over ts-jest:**
+- ts-jest requires TypeScript < 7; codebase is TypeScript 7
+- TypeScript 7 removed the JS compiler API that ts-jest relied on
+- @swc/jest uses SWC (Rust transpiler) and works with TS 7
+
+**Coverage philosophy:**
+- Unreachable code is removed (refactored), not excluded
+- Example: admin stats "zero capacity" fallbacks removed instead of covered by mock
+- Result: 62 Jest tests, 100% coverage metrics, codebase more maintainable
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
+
+**Related:** In-memory PGlite on port 5498 for test isolation; npm test runs Playwright then Jest.

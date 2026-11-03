@@ -372,3 +372,46 @@ Lessons about how to work with this user and project.
 - Test with slow network (throttle in DevTools) and rapid filter changes
 
 **Session:** [[Session Log/2026-11-03#Review Round and Finish]]
+
+---
+
+## 21. A 100% Branch-Coverage Push Surfaces Dead Defensive Code
+
+**Rule:** When enforcing 100% branch coverage (not just statement coverage), you'll find branches that can never execute. Remove the code; don't add ignore comments.
+
+**Why:**
+- Defensive code with early returns or fallbacks often never triggers in practice
+- Example: admin stats "zero capacity" fallback when all sectors are checked
+- Coverage highlight makes dead code visible; it's now or never to clean it up
+- Code that doesn't execute is code that won't be maintained; it rots
+- Ignore comments hide the problem; refactoring fixes it
+
+**How to apply:**
+- Run 100% coverage and read the uncovered branches carefully
+- Ask: "could this line ever run given the preconditions?"
+- If no: remove the branch and simplify the logic
+- Example: instead of `if (!sectors.length) return 0; return sectors.reduce(...)`, build from sectors directly
+- Result: code is shorter, simpler, and provably correct
+
+**Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
+
+---
+
+## 22. Check Third-Party Middleware Default Responses Against the API's Error Contract
+
+**Rule:** Middleware like express-rate-limit send their own error responses. Verify they match your API's response schema before relying on them.
+
+**Why:**
+- express-rate-limit (by default) sends a plain-text 429 response
+- API spec requires JSON with {message} schema
+- Tests fail because response.json() throws on text content
+- Easy to miss: middleware is added, works, but violates the contract
+
+**How to apply:**
+- When adding rate-limiting, CORS, auth, or other middleware: check its docs for response format
+- Write a test that expects 429 (or your threshold) and parse the response as JSON
+- If middleware sends plain text, configure it to send JSON (express-rate-limit has a `message` option) or wrap it
+- Example fix: `express-rate-limit({ message: JSON.stringify({ message: 'Rate limit exceeded' }) })`
+- Automate this in tests: every error path should return valid JSON
+
+**Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
