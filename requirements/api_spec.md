@@ -1,6 +1,7 @@
 # API Specification
 **ResortOS AI — Restaurant Booking App**
 
+**Route names are plural** (owner rule, 2026-11-04; exceptions: `public`, `auth`, action words, `health`, `me`, `stats`).  
 Base URL: `/api`. Paths in the tables below are relative to it (e.g. `/public/menus` is `/api/public/menus`). JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
 
 **Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production). Its value is a long random token; the server stores only its SHA-256, in the `Session` table (`data_model.md`). A session lasts **1 hour from sign-in** and is never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>`, checked against the `ApiKey` table (SHA-256 only, `data_model.md`). `Authorization: Bearer` is not accepted.  

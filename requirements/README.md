@@ -19,6 +19,8 @@ Read in this order. Every v1 code change must trace back to one of these docs (s
 | 12 | [test_scenarios_app.md](test_scenarios_app.md) | Every guest/admin scenario: tested, where, and still to test | ✅ |
 | 13 | [test_scenarios_assistant.md](test_scenarios_assistant.md) | Every guest → AI → API scenario, live AI runs, still to test | ✅ |
 | 14 | [e2e_spec.md](e2e_spec.md) | Real end-to-end suite (`resortos-booking-e2e`): no mocking, test database, videos, results | ✅ |
+| 15 | [coding_standards_backend.md](coding_standards_backend.md) | How backend TypeScript is written (api, agent, e2e): layout, plural routes, validation, logging, tests | ✅ |
+| 16 | [coding_standards_react.md](coding_standards_react.md) | How the React app is written: where types and API calls live, components, security, tests | ✅ |
 | — | [../AGENTS_TO_BE_USED.md](../AGENTS_TO_BE_USED.md) | Agent skills and when to use them | ✅ |
 
 ### Per-repo docs
