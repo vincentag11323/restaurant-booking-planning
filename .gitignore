@@ -1,0 +1,6 @@
+.DS_Store
+# App repos are separate git repositories
+resortos-booking-api/
+resortos-booking-web/
+# Obsidian app state
+obsidian-log/.obsidian/
