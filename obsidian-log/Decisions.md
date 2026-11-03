@@ -188,3 +188,51 @@ date: 2026-11-03
 **Session:** [[Session Log/2026-11-03#Planning Docs Completed]]
 
 **Related:** [[Open Questions#API Versioning and Type Sharing]]
+
+---
+
+## PGlite for Local Dev + Tests; Real Postgres for Production
+
+**Decision:** Use PGlite (embedded Postgres via @electric-sql/pglite-socket) for dev/test. Production uses real PostgreSQL 17.
+
+**Why:**
+- **Zero install:** npm test runs immediately without Docker or Postgres install
+- **Fast local feedback:** Tests don't need external database setup
+- **Verified:** P2002 unique violations, transaction rollback, AuditLog immutability trigger all tested against PGlite
+- **Production safety:** Real Postgres 17 ensures no dev/prod parity surprises
+- **Simplicity:** Single dependency; no Docker/Homebrew decisions needed
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Build Phase]]
+
+**Related:** Resolves [[Open Questions#Local Postgres Method|Local Postgres Method]] — Docker/brew still optional; PGlite is the standard.
+
+---
+
+## Admin Booking Log: Reservation Code as Drawer Trigger
+
+**Decision:** Reservation code in first column of admin booking log doubles as the drawer trigger; no separate action column.
+
+**Why:**
+- Keeps critical info (code) always visible, even on phones
+- Reduces horizontal scrolling on mobile
+- Reservation code is the unique identifier customers use; making it the affordance is intuitive
+- Saves space (one column, not two)
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Build Phase]]
+
+---
+
+## Light Theme Only; Light Blue Brand Ground
+
+**Decision:** Application is light theme only. Light blue (#E4EFF7) is the ground color and brand anchor.
+
+**Why:**
+- User specified warm fine dining on friendly light blue background — this is the brand
+- v1 scope doesn't include dark mode
+- Light blue sets the emotional tone; extending to dark would dilute brand
+- antislop R-21 reason recorded in DESIGN.md
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Build Phase]]

@@ -206,3 +206,108 @@ Lessons about how to work with this user and project.
 - If the user or coordinator decided it, it's done — update the decision, not the open list
 - Only list items that genuinely need user input, not re-litigation of closed decisions
 - When in doubt, ask: "Is this still open, or was it decided?"
+
+---
+
+## 12. execSync Inside Playwright globalSetup Deadlocks In-Process PGlite
+
+**Rule:** Don't use execSync (blocking I/O) in Playwright's globalSetup when an in-process PGlite server is running.
+
+**Why:**
+- execSync blocks the Node event loop
+- PGlite server (running in the same process) can't service requests while the event loop is blocked
+- Hangs indefinitely or times out
+
+**How to apply:**
+- Replace execSync with async exec in Playwright globalSetup/globalTeardown
+- Use `const { execFile } = require('child_process'); await execFile('...')`
+- Or use direct async libraries (e.g., PGlite's own async API if available)
+- Test with in-process servers: blocking calls = bad
+
+---
+
+## 13. Tailwind v4: Can't @apply Custom Component Classes
+
+**Rule:** Tailwind v4 doesn't support `@apply` on custom component classes (`.btn-primary`, etc.).
+
+**Why:**
+- `@apply` in v4 is restricted to built-in utilities
+- Custom component classes defined in the same layer don't re-export
+
+**How to apply:**
+- Share base styles via a grouped selector: `.btn-primary, .btn-secondary { @apply py-2 px-4 rounded; }`
+- Or use `@utility` (v4 API) for custom utilities that compose
+- Or define shared Tailwind config values and apply them individually per class
+- Plan component classes early; refactor to grouped selectors if @apply fails
+
+---
+
+## 14. Playwright getByRole Name Matching: Substring by Default; Beware Collisions
+
+**Rule:** Playwright's getByRole name matching is substring by default; a button with aria-label "Reserve VIP table" will match getByRole('button', { name: 'table' }).
+
+**Why:**
+- Substring matching is the default; exact match is not
+- Aria-labels containing codes (reservation codes, table names) can collide with other role names
+- Tests pass unexpectedly, then fail when data changes
+
+**How to apply:**
+- Use `exact: true` when name matching should be precise
+- Prefer explicit labels or test ids for cells/codes
+- Test with real data that includes edge cases (codes that are substrings of other text)
+- If getByRole is slow to debug, target the button directly by testid
+
+---
+
+## 15. Pre-Existing WIP Code Breaks TDD: Acknowledge it in Reports
+
+**Rule:** If implementation code exists before tests are written, say so explicitly. Don't claim tests are "red-first" when they go green immediately.
+
+**Why:**
+- TDD's power is test-driven design: red → green → refactor
+- If code is already written (WIP), tests go green immediately, breaking the feedback loop
+- This hides design problems the red phase would have surfaced
+- Future readers assume tests were red-first and guided design (they didn't)
+
+**How to apply:**
+- When authoring tests, check if implementation is already there
+- If WIP exists: note "tests written against existing implementation; not true TDD" in the commit message or report
+- Next time, write tests first, even if it means throwing away WIP
+- Use `--grep` to run only new tests initially, verify they'd fail on blank code
+
+---
+
+## 16. Serif Old-Style Numerals: Set Numbers in Sans Face for Clarity
+
+**Rule:** When using a serif font with old-style numerals (Cormorant Garamond), set numeric content (codes, times, counts) in a sans-serif font.
+
+**Why:**
+- Old-style numerals (common in serif fonts) make "0" look like "O", "6" like "G"
+- Reservation codes (RSV-7K3Q9X), counts, times must be unambiguous at a glance
+- Serifs look elegant but sacrifice legibility on small screens or in table cells
+
+**How to apply:**
+- Use Cormorant Garamond (serif) for headings and body text
+- Switch to Source Sans 3 (sans) for: reservation codes, counts, times, prices, any numeric label
+- CSS: `.code, .count, .time { font-family: 'Source Sans 3'; }`
+- Test on mobile and in low-contrast contexts
+
+---
+
+## 17. Mobile-Only Test Failure Exposes Real UX Bugs
+
+**Rule:** Run UI tests on both desktop and phone viewports. Desktop-only testing misses mobile layout bugs.
+
+**Why:**
+- Wide tables on mobile cause overflow
+- Action buttons outside the viewport can't be tapped
+- CSS breakpoints may be incorrect or untested
+- Desktop tests pass; mobile users hit the bug
+
+**How to apply:**
+- Run Playwright tests on at least 2 viewports: desktop (1280px) and phone (Pixel 7, ~412px)
+- Include "scroll to element" before interactions on mobile
+- Test forms, tables, drawers at phone width
+- If a test fails on mobile only, it's a real bug; prioritize it
+
+**Session:** [[Session Log/2026-11-03#Build Phase]]
