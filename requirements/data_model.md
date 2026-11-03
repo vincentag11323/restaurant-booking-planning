@@ -15,7 +15,8 @@ AuditLog   (standalone, append-only)
 ## 2. Enums
 | Enum | Values |
 |---|---|
-| `Role` | `USER`, `ADMIN` |
+| `Role` | `USER`, `ADMIN`, `AGENT` (the AI booking assistant's service account) |
+| `BookingSource` | `APP` (guest in the app), `AGENT` (assistant on the guest's behalf) |
 | `Branch` | `BRANCH_1`, `BRANCH_2` |
 | `Sector` | `MAIN_HALL`, `VIP_WING` |
 | `ReservationStatus` | `CONFIRMED`, `SEATED`, `COMPLETED`, `CANCELLED`, `NO_SHOW` (v1 writes only `CONFIRMED` / `CANCELLED`) |
@@ -28,11 +29,11 @@ AuditLog   (standalone, append-only)
 |---|---|---|
 | `id` | text (cuid) | PK |
 | `email` | text | unique, stored lowercase |
-| `passwordHash` | text | bcrypt, cost 12 |
+| `passwordHash` | text? | bcrypt, cost 12. **Null** for a guest account created by the assistant; sign-up with that email sets it (claims the account) |
 | `name` | text | 1–100 chars |
 | `phone` | text? | optional |
 | `allergies` | text[] | lowercase tags, max 20 (e.g. `gluten`, `shellfish`) |
-| `role` | `Role` | default `USER`. `ADMIN` only via seed |
+| `role` | `Role` | default `USER`. `ADMIN` and `AGENT` only via seed |
 | `createdAt` | timestamptz | default now |
 
 ### `DiningTable` (seeded, read-only to the app)
@@ -58,11 +59,14 @@ Index: `(branch, sector)`. Seed total: 108 rows (2 branches × (50 + 4)).
 | `partySize` | int | 1–50 |
 | `specialRequests` | text? | max 500 chars |
 | `status` | `ReservationStatus` | default `CONFIRMED` |
+| `source` | `BookingSource` | default `APP` |
+| `createdById` | text? | FK → `User`: the guest (app) or the assistant's account (`AGENT`) |
+| `idempotencyKey` | text? | **unique**; a retried assistant confirmation returns the same booking |
 | `tableIds` | text[] | **snapshot** of assigned tables. Kept after cancel so admins still see what was assigned |
 | `createdAt` / `updatedAt` | timestamptz | |
 | `cancelledAt` | timestamptz? | set on soft cancel |
 
-Indexes: `userId`, `(branch, slotStart)`, `status`.
+Indexes: `userId`, `(branch, slotStart)`, `status`, `source`.
 
 ### `ReservationTable` (live locks)
 | Column | Type | Rules |
@@ -116,7 +120,7 @@ FOR EACH ROW EXECUTE FUNCTION audit_log_immutable();
 * 108 `DiningTable` rows.
 * ~10 `MenuItem` rows: Chicken Steak, Beef Steak, Barramundi, Fish & Chips, Classic Burger, plus seasonal fine-dining dishes, with allergen tags.
 * 1 `ADMIN` user from `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-* (Dev only) A few sample reservations covering every status, so admin filters can be tested.
+* 1 `AGENT` user (the AI booking assistant) from `AGENT_EMAIL` / `AGENT_PASSWORD`.
 
 ## 5. Migrations
 * `prisma migrate dev` generates migrations from the schema. The trigger SQL is appended to the init migration by hand.

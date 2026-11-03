@@ -60,7 +60,7 @@ ResortOS AI lets restaurant guests (Users) browse the menu, reserve tables and m
 | **AI/ML recommendations** | No order history to learn from yet. Rule-based filter covers allergy safety | v2+ |
 | Spending history overview | There is no order/POS data source | v2 (with POS) |
 | Reminder notifications (scheduled), email/WhatsApp/push delivery | Needs a job scheduler + provider accounts. `notify()` stub is the hook point | v2 |
-| Host-stand actions: check-in, `SEATED`, `COMPLETED`, `NO_SHOW` updates | Admin is read-only by PRD. Statuses exist in the schema and are filterable (seeded) | v2 |
+| Host-stand actions: check-in, `SEATED`, `COMPLETED`, `NO_SHOW` updates | Admin is read-only by PRD. Statuses exist in the schema and in the admin filters; nothing sets them yet | v2 |
 | Any admin create/edit/delete of bookings, tables, menu or users | PRD: Admin = read-only | v2 |
 | Flexible start times / custom durations | Fixed slots keep overlap logic trivial | v3 |
 | Table map / manual table picking by guest | Auto-allocation only | v3 |

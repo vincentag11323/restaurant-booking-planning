@@ -1,0 +1,115 @@
+# Test Scenarios: Real Users (Guest and Admin)
+**ResortOS AI — Restaurant Booking App**
+
+People using the web app (PWA) and the booking API directly. For the AI assistant (guest → AI → API) see [test_scenarios_assistant.md](test_scenarios_assistant.md). Strategy and tools: [testing_plan.md](testing_plan.md).
+
+**Status:** ✅ automated and passing · 👁 checked by hand on the real stack (browser → web → API → database) · ⬜ to be tested
+
+**Where the tests live:**
+| Code | Suite |
+|---|---|
+| `API` | `resortos-booking-api/tests/api/*.spec.ts` (Playwright, real API + database) |
+| `UNIT` | `resortos-booking-api/tests/unit/*.spec.ts` (Playwright) |
+| `JEST` | `resortos-booking-api/tests/jest/*.test.ts` (Jest, 100% coverage) |
+| `WEB` | `resortos-booking-web/tests/e2e/*.spec.ts` (Playwright, phone viewport, API mocked) |
+
+## 1. Guest account
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| A1 | Register with name, email, password, phone | Signed in, lands on "Reserve a table" | API auth, JEST auth, WEB account-and-menu | ✅ 👁 |
+| A2 | Register with an email that's taken | "Email is already registered" | API auth, WEB account-and-menu | ✅ |
+| A3 | Password under 8 characters | Explained before any request | API auth, WEB account-and-menu | ✅ |
+| A4 | Invalid phone number | "phone: Invalid phone number" | API platform, JEST agent | ✅ |
+| A5 | Wrong password / unknown email | Same "Invalid email or password", same timing | API auth, JEST auth | ✅ |
+| A6 | Email typed in capitals | Same account (stored lowercase) | JEST auth | ✅ |
+| A7 | Reload the page while signed in | Still signed in (refresh cookie) | WEB session-and-states | ✅ 👁 |
+| A8 | Access token expires (15 min) | Refreshed and the request retried | WEB session-and-states (simulated) | ✅ |
+| A9 | Refresh also fails | Sent to sign in | WEB session-and-states | ✅ |
+| A10 | Sign out | Back to sign in; pages protected again; refresh stops working | API platform, JEST auth, WEB session-and-states | ✅ 👁 |
+| A11 | Sign up with an email the assistant booked for | Claims the guest account; assistant bookings appear in "My bookings" | API agent, JEST agent | ✅ |
+| A12 | 10 failed logins from one IP in 5 minutes | One security alert in the audit log | JEST auth | ✅ |
+| A13 | Too many auth attempts | 429 with a JSON message | JEST environment | ✅ |
+
+## 2. Booking a table
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| B1 | Book Main Hall: branch, room, date, sitting, guests, note | Reservation code, ⌈party ÷ 2⌉ tables, 2.5-hour slot | API reservations, WEB booking | ✅ 👁 |
+| B2 | Book VIP for 14 | 2 rooms joined | WEB session-and-states, click-through | ✅ 👁 |
+| B3 | Sitting already full | Can't be picked ("Fully booked") | WEB booking | ✅ |
+| B4 | Sitting too small for the party | Disabled ("Not enough room for N") | WEB session-and-states | ✅ |
+| B5 | Server says no capacity (race) | Message shown, no booking | API reservations, WEB booking | ✅ |
+| B6 | Party over 50 / not a whole number | Explained before calling the API | API reservations, WEB booking | ✅ |
+| B7 | Time that isn't a fixed sitting | 400 with the valid sittings | API reservations | ✅ |
+| B8 | Past date / more than 60 days ahead | 400 "Selected slot is in the past or too far ahead" | API reservations, JEST reservations | ✅ |
+| B9 | Two guests take the last capacity at once | Exactly one booking, never double-booked | API reservations | ✅ |
+| B10 | Open a confirmation link directly | Booking loads; unknown ID says "Reservation not found" | WEB session-and-states | ✅ |
+| B11 | Times shown in restaurant time (UTC+7) | "Thu 24 Dec, 19:30 – 22:00" | UNIT booking-rules, WEB | ✅ |
+
+## 3. Managing bookings
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| M1 | Upcoming and past tabs | Each booking in the right tab | WEB my-bookings | ✅ |
+| M2 | Reschedule to another sitting | New slot and tables; dialog starts at the current sitting | API reservations, WEB my-bookings | ✅ 👁 |
+| M3 | Reschedule into a full sitting | Rejected; original booking and tables kept | API reservations, WEB session-and-states | ✅ |
+| M4 | Cancel after confirming | Status Cancelled, tables freed, record kept | API reservations, JEST http-basics, WEB my-bookings | ✅ 👁 |
+| M5 | Cancel or change twice / after the sitting started | 400 with the reason | API reservations, JEST reservations | ✅ |
+| M6 | Reschedule and cancel at the same moment | Never a cancelled booking holding tables | API reservations | ✅ (real Postgres ⬜, see §8) |
+| M7 | No bookings yet | "No upcoming bookings yet" with a link to book | WEB my-bookings | ✅ |
+| M8 | Escape / Keep buttons | Dialog closes, nothing changes | WEB my-bookings, WEB session-and-states | ✅ |
+
+## 4. Menu and profile
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| P1 | Browse menu by type, signed out | Dishes and prices; no "Safe for you" | API menu, WEB account-and-menu | ✅ 👁 |
+| P2 | Save allergies | Stored lowercase; "Profile saved" | API auth, WEB account-and-menu | ✅ 👁 |
+| P3 | "Safe for you" hides allergens, chef's picks first | Matches case-insensitively | API menu, JEST auth-profile-menu | ✅ 👁 |
+| P4 | Clear phone number | Phone removed | API platform | ✅ |
+
+## 5. Admin (read-only)
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| D1 | Day view: guests, active bookings, cancellations, utilisation | Real numbers for the date and branch | API admin, JEST admin, WEB admin | ✅ 👁 |
+| D2 | Day view counts assistant bookings | "of which N via AI assistant" | API agent, WEB admin-agent | ✅ |
+| D3 | Booking log search by name, email, phone or code | Matching bookings only | API admin, JEST admin, WEB admin | ✅ 👁 |
+| D4 | Filters: branch, room, status, booked by, dates; paging | Correct subset; 20 per page | API admin, API agent, WEB admin, WEB admin-agent | ✅ |
+| D5 | A slow old filter result arrives late | Never overwrites the newer result | WEB admin | ✅ |
+| D6 | Detail sheet | Guest, sitting, tables, notes, "Booked by", cancelled time | API admin, WEB admin, WEB admin-agent | ✅ 👁 |
+| D7 | Export CSV / JSON | Filtered rows, `source` column, formulas neutralised | API admin, JEST admin, WEB admin | ✅ 👁 |
+| D8 | Export over 1,000 rows | Security alert in the audit log | JEST admin | ✅ |
+| D9 | Admin tries to create or delete a booking | 403 / no such route | API admin, API agent | ✅ |
+
+## 6. Security and RBAC (direct API calls)
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| S1 | Guest opens another guest's booking (IDOR) | 404 for read, reschedule, cancel | API reservations | ✅ |
+| S2 | Guest opens admin pages or routes | Redirected / 403 | API admin, WEB admin | ✅ |
+| S3 | Forged or missing token | 401 | API platform, JEST http-basics | ✅ |
+| S4 | Assistant's account on any non-assistant route | 403 everywhere | API agent | ✅ |
+| S5 | Sign up as the assistant's or an admin's email | "Email is already registered" | API agent | ✅ |
+| S6 | Audit log edited or deleted | Refused by the database | JEST domain | ✅ |
+| S7 | Malformed JSON, unknown route, security headers | JSON 400/404, `nosniff`, no `x-powered-by` | API platform | ✅ |
+| S8 | Production mode | Secure cookie, trusts one proxy | JEST environment | ✅ |
+
+## 7. Mobile and PWA
+| # | Scenario | Expected | Covered by | Status |
+|---|---|---|---|---|
+| W1 | Every screen at phone width | No sideways scrolling | WEB layout | ✅ |
+| W2 | Bottom tabs per role; sheets open at their title | Right tabs; focus on the title | WEB, WEB session-and-states | ✅ 👁 |
+| W3 | Manifest and icons | Name, standalone, theme, 192/512/maskable icons reachable | WEB pwa | ✅ |
+| W4 | Service worker; open with the network off | App opens; API errors say "You're offline" | WEB pwa | ✅ |
+| W5 | Error states (bookings, sittings, menu, numbers, profile) | Each names the problem | WEB session-and-states | ✅ |
+
+## 8. To be tested
+| # | Scenario | Why it matters | How |
+|---|---|---|---|
+| T1 | **Install on a real iPhone (Safari) and Android (Chrome)**, open from the home screen, go offline | Only emulated so far | Manual, on devices, after HTTPS hosting |
+| T2 | **Races on real PostgreSQL** (two cancels/reschedules, last-table bookings, per-email cap) | The test database (PGlite) runs queries one at a time, so true parallelism isn't exercised | API suite against a Postgres 17 instance |
+| T3 | **Other browsers**: Safari/WebKit, Firefox | Suite runs Chromium only | Add Playwright WebKit/Firefox projects |
+| T4 | **Accessibility audit** with axe and a screen reader (VoiceOver, TalkBack) | Roles and labels are tested, not the full experience | axe in Playwright + manual pass |
+| T5 | **Visual regression** of the main screens | Behaviour is tested, pixels aren't | Playwright `toHaveScreenshot()` |
+| T6 | **Load test**: 500 concurrent users at dinner time, p95 < 300 ms | testing_plan.md target, not yet measured | k6 or Artillery on staging |
+| T7 | **Real 15-minute token expiry** and 7-day refresh | Expiry is simulated in UI tests | Manual, or a test with short TTLs |
+| T8 | **HTTPS deployment**: same-site refresh cookie, CORS, `TRUST_PROXY` | Only localhost so far | Staging smoke test |
+| T9 | **CSV opened in Excel / Google Sheets** | Formula neutralising is unit-tested, not opened in apps | Manual |
+| T10 | **Penetration test / OWASP ZAP scan** | security_spec.md requires one before launch | ZAP baseline on staging |
+| T11 | **UAT** with restaurant staff and a few guests | Real-world fit | Staging, guided session |

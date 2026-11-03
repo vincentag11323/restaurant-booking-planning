@@ -15,11 +15,13 @@ Read in this order. Every v1 code change must trace back to one of these docs (s
 | 8 | [security_spec.md](security_spec.md) | Auth, RBAC, encryption, compliance | ✅ |
 | 9 | [audit_trail.md](audit_trail.md) | Audit log format, retention, alerts | ✅ |
 | 10 | [testing_plan.md](testing_plan.md) | Unit / API / UI / security / performance testing | ✅ |
-| 11 | [agent_spec.md](agent_spec.md) | Booking assistant (AI agent) repo: scope, guardrails, Mastra vs LangGraph, open decisions | 📝 Plan, awaiting approval |
+| 11 | [agent_spec.md](agent_spec.md) | Booking assistant (AI agent): scope, guardrails, RBAC, Cent AI, decisions | ✅ Built |
+| 12 | [test_scenarios_app.md](test_scenarios_app.md) | Every guest/admin scenario: tested, where, and still to test | ✅ |
+| 13 | [test_scenarios_assistant.md](test_scenarios_assistant.md) | Every guest → AI → API scenario, live AI runs, still to test | ✅ |
 | — | [../AGENTS_TO_BE_USED.md](../AGENTS_TO_BE_USED.md) | Agent skills and when to use them | ✅ |
 
 **Reference only (Bahasa, hospital template):** `alur_kerja_workflow.md`, `sistem_audit_audit_trail.md`, `spesifikasi_keamanan_security.md`, `rencana_pengujian_testing.md`.
 
-### Docs to write later (not needed before coding)
-* `resortos-booking-api/README.md` and `resortos-booking-web/README.md`: setup & run commands, written alongside the code.
-* `deployment.md`: post-v1 (hosting, CI/CD are out of scope for v1).
+### Per-repo docs
+* `resortos-booking-api/README.md`, `resortos-booking-web/README.md` (+ `DESIGN.md`), `resortos-booking-agent/README.md` (+ `AGENT_CAPABILITIES.md`): setup, run, test.
+* `deployment.md`: post-v1 (hosting and CI/CD are out of scope for v1).

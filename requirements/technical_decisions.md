@@ -52,16 +52,5 @@ Accepted costs: a `prisma generate` step and the Prisma 7 driver-adapter setup (
 * `404` for unknown reservations **and** for reservations owned by another guest (prevents IDOR probing).
 * `401` / `403` for missing/invalid tokens and wrong roles. These are unavoidable with auth, so they are added to the PRD's list.
 
-## 4. v1 Simplifications (deliberately out of scope)
-| PRD item | v1 behaviour |
-|---|---|
-| Login with "Passcode" | Email + password only. |
-| AI-driven recommendations | Rule-based: hide dishes containing the guest's allergens, show chef's picks first. Needs order history before ML is worthwhile. |
-| Spending history overview | Not shown. There is no order/POS data source yet. |
-| Notifications & reminders | Confirmation is shown in-app and logged server-side through a `notify()` stub, which is the single place to plug in email/WhatsApp later. No reminder scheduler. |
-| `SEATED` / `COMPLETED` / `NO_SHOW` statuses | Exist in the schema and in admin filters. The v1 app only writes `CONFIRMED` / `CANCELLED`. Seed data covers the others. |
-| Admin MFA | Future enhancement. |
-
-## 5. Repositories
-* `resortos-booking-api/`: Express 5 + TypeScript + Prisma + Zod + Playwright (API & unit tests).
-* `resortos-booking-web/`: React 19 + Vite + TypeScript + Tailwind CSS 4 + Playwright (UI tests, API mocked).
+## 4. Scope and repositories
+What v1 builds and deliberately leaves out is defined once, in [PRD_BOOKING_v1.md](PRD_BOOKING_v1.md) §3. Repository layout and stacks: PRD v1 §4.1 and each repo's README. The AI booking assistant's design is [agent_spec.md](agent_spec.md).
