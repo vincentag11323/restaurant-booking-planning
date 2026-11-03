@@ -443,7 +443,7 @@ Lessons about how to work with this user and project.
 **Rule:** HTML `<dialog>` elements automatically focus the first focusable element (often a close/submit button). In a scrollable dialog, this scrolls to the bottom. Autofocus the title or a neutral element instead.
 
 **Why:**
-- Bottom-sheet dialogs (reschedule, menu, allergies) are long and scroll to the bottom
+- Bottom-sheet dialogs (the admin booking detail especially) are long and scroll to the bottom
 - Browser focuses the Close button (at the bottom) on open
 - User sees the bottom of the form, not the title or first input
 - Breaks the UX expectation: dialog opens at the top
