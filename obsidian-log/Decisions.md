@@ -384,3 +384,29 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 **Session:** [[Session Log/2026-11-03#Docs Round and Handoff]]
 
 **Recorded:** security_spec.md §1, DIAGRAM.md §4
+
+---
+
+## Spec Narrowed: Deleted Account 401 Only on GET /me (Sessions Stay Stateless)
+
+**Decision:** During Stage 3 Review the deleted-account 401 rule in `requirements/api_spec.md` was narrowed to `GET /me` only (root commit ecb583c), so sessions stay stateless.
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-04#Review Stage Complete (Stage 3)]]
+
+---
+
+## Review Findings Not Fixed
+
+**Decision (orchestrator, 2026-11-03):** not fixed: trailing slash in `CORS_ORIGIN`; deleted account on `PATCH /me` (covered by the spec narrowing above); the tracked `coverage/` folder in the api repo.
+
+**Session:** [[Session Log/2026-11-04#Review Stage Complete (Stage 3)]]
+
+---
+
+## Dev-Only npm Audit Findings Left Unfixed
+
+**Decision:** `npm audit --omit=dev` is 0 in every repo. The dev-only findings (api: 19 in the Jest tooling; web: 10 in vite-plugin-pwa) are left alone because clearing them needs breaking version changes.
+
+**Date:** 2026-11-04  
+**Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]

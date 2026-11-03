@@ -8,7 +8,8 @@ date: 2026-11-03
 Claude's running log, learnings, and decisions for the ResortOS restaurant booking project.
 
 ## Navigation
-- [[Session Log/2026-11-03]] — Today's chronological notes
+- [[Session Log/2026-11-04]] — Today's chronological notes
+- [[Session Log/2026-11-03]] — Previous session
 - [[Learnings]] — Lessons about this project and user
 - [[Decisions]] — Architecture and tool choices
 - [[Open Questions]] — Unresolved items blocking progress

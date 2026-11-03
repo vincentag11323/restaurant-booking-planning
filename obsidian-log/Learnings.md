@@ -655,3 +655,44 @@ Lessons about how to work with this user and project.
 - ✓ `useEffect(() => { setState(value); }, [])`
 
 **Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
+
+---
+
+## 35. Playwright Subset Test Run Rebuilds RESULTS.md; Verify with --reporter=line
+
+**Rule:** When running a Playwright subset of projects (not the full suite), the reporter rebuilds RESULTS.md from scratch, overwriting or losing previous runs.
+
+**Why:**
+- Playwright test reporter collects all project results and merges into one RESULTS.md
+- Running only one or two projects means the reporter only sees those results
+- Full run context is lost; the merged report shows only the subset
+- Hard to spot: the file is overwritten silently
+
+**How to apply:**
+- For subset runs, use `--reporter=line` to stream results to terminal instead of the merged RESULTS.md
+- Run full suites before relying on RESULTS.md as ground truth
+- If you need subset results preserved, save the full RESULTS.md before running subsets
+- Document in test scripts which reporter is used for what
+
+**Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
+
+---
+
+## 36. Strip ANSI Colour Codes Before Grepping Test Output
+
+**Rule:** Test output with colour codes (e.g., Playwright reporters) cannot be grepped reliably; strip ANSI codes first.
+
+**Why:**
+- Colour codes are ANSI escape sequences embedded in output: `\x1b[32m`, `\x1b[0m`
+- grep won't match visible text if ANSI codes interrupt the match
+- Example: "PASSED" in green may be `\x1b[32mPASSED\x1b[0m`, invisible to grep
+- Can silently lose matches in logs and reports
+
+**How to apply:**
+- Pipe output through `sed` or `perl` to strip codes before grep:
+  - `output | sed 's/\x1b\[[0-9;]*m//g' | grep PASSED`
+  - Or in Bash: `TERM=dumb` disables colour on many tools
+- Save raw output to a file, strip codes, then grep
+- When debugging test output, assume codes are there until verified
+
+**Session:** [[Session Log/2026-11-04#Test Stage Complete (Stage 4)]]
