@@ -15,7 +15,7 @@ flowchart LR
   end
 
   ba -->|"/api/* JSON<br/>HttpOnly session cookie (1 h)"| api
-  aa -->|"/agent/chat → POST /chat<br/>email in body, no login"| agent
+  aa -->|"/agents/users/chats (proxied)<br/>email in body, no login"| agent
 
   subgraph agent["resortos-booking-agent (:4300)"]
     mastra["Mastra agent<br/>3 tools"]
@@ -69,13 +69,13 @@ sequenceDiagram
   participant AG as Agent
   participant M as Cent AI model
   participant A as Booking API
-  G->>AG: POST /chat {contact:{email}, messages}
+  G->>AG: POST /agents/users/chats {contact:{email}, messages}
   AG->>M: messages only (email/phone never sent), 25 s limit
   M->>AG: tool call proposeBooking(branch, room, date, time, party)
   AG->>A: lookup guest (one exact email) + availability
   alt fits the rules and capacity
     AG-->>G: read-back written by code + pendingBooking {draft, signed token}
-    G->>AG: POST /chat {confirm: pendingBooking} (no model call)
+    G->>AG: POST /agents/users/chats {confirm: pendingBooking} (no model call)
     AG->>A: POST /api/agents/reservations (Idempotency-Key = token)
     A-->>AG: 201 (guest account created if new)
     AG-->>G: "You're booked ... RSV-XXXXXX"

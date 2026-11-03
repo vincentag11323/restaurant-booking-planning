@@ -34,7 +34,7 @@ A chat assistant that answers **booking questions only** and can **book a table 
 
 ```
  Guest (chat UI)                 resortos-booking-agent                 resortos-booking-api
- ────   POST /agents/users/chats ┌
+ ────   POST /agents/users/chats ┌───────────────────────────┐   HTTP   ┌──────────────────────────┐
  messages +       ─────────────▶ │ 1. validate input (Zod)   │ ───────▶ │ GET /api/public/          │
  { email, phone? }               │ 2. topic guard            │          │ POST /api/agents/         │
                   ◀───────────── │ 3. agent + 2 tools        │ ◀─────── │      reservations (NEW)   │
