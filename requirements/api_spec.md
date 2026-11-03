@@ -104,8 +104,9 @@ Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`.
 | Method | Path | Input | Success | Errors |
 |---|---|---|---|---|
 | POST | `/agent/reservations` | `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp? }`, header `Idempotency-Key?` (8–200 chars) | `201 Reservation` (`source: "AGENT"`); same key again → `200` with the same booking | Same `400` messages as `POST /reservations`, plus `This email already has 2 upcoming assistant bookings. Sign in to manage them.`, `This email can't be booked through the assistant` (staff accounts), `Idempotency-Key was already used for another booking` |
-| POST | `/agent/guests/lookup` | `{ email }` (one exact email) | `200 { exists, upcomingAssistantBookings }` | `400` for anything but a single email; 60 requests/minute |
+| POST | `/agent/guests/lookup` | `{ email }` (one exact email) | `200 { exists, upcomingAssistantBookings, assistantBookingLimit }` | `400` for anything but a single email; 60 requests/minute |
 
+* **Assistant booking limit per email:** an email that **hasn't signed up** (password-less guest account, or new) may hold **1** upcoming assistant booking; a signed-up guest may hold **2**. Over the limit → `400 "This email already has a booking made with the assistant. To book a different time, sign up with this email in the app, cancel that booking there, then ask me again."` (not signed up) or `400 "This email already has 2 upcoming assistant bookings. Sign in to manage them."` (signed up). The check runs inside the booking transaction.
 * Booking finds or creates a **password-less guest account** for the email. `POST /auth/register` with that email **claims** it (sets the password) and keeps its bookings; a password-less account can't log in (`401 Invalid email or password`, same as a wrong password).
 * Audit: `CREATE_RESERVATION` (actor = assistant, `metadata: { source, onBehalfOf, clientIp }`), `VIEW_GUEST` for every lookup.
 * Export adds a `source` column.
@@ -115,3 +116,11 @@ Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`.
 |---|---|---|
 | GET | `/health` | `200 { status: "ok" }` |
 | * | unknown route | `404 { message: "Route not found" }` |
+
+## 8. Failure logging
+Every failed request (any `4xx` or `5xx` response, including unknown routes and rate limits) is:
+* written as one JSON line to **`logs/errors.log`** (`ERROR_LOG_PATH`): `{ time, status, method, path, message, userId?, ip }`. No request bodies, passwords, tokens or guest messages. `5xx` lines also carry the error name and stack;
+* printed with `console.error`.
+
+**Rotation:** before writing, if the file is over **5 MB** (`ERROR_LOG_MAX_BYTES`), it's renamed `errors.log.1` (older copies shift to `.2`, `.3`; the 4th is deleted), so at most **3** old files are kept. Tests point `ERROR_LOG_PATH` at a temp file and can silence the console (`ERROR_LOG_CONSOLE=false`).
+

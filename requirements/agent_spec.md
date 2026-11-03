@@ -122,7 +122,7 @@ User text is treated as data. Whatever the message says ("ignore your rules…",
 |---|---|
 | 10 chat requests / minute / IP | agent |
 | 3 assistant bookings / hour / IP | agent |
-| Max 2 upcoming assistant bookings per email | backend |
+| **1** upcoming assistant booking for an email that hasn't signed up; **2** once signed up (owner rule, 2026-11-03). Over the limit the guest is told to sign up, cancel the existing booking in the app, then ask again. The assistant never cancels (the email is unverified) | backend |
 | Party size and window rules | backend (existing) |
 | Unverified email risk | See decision D2 |
 

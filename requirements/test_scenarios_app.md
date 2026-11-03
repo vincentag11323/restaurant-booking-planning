@@ -89,6 +89,8 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | S6 | Audit log edited or deleted | Refused by the database | JEST domain | ✅ |
 | S7 | Malformed JSON, unknown route, security headers | JSON 400/404, `nosniff`, no `x-powered-by` | API platform | ✅ |
 | S8 | Production mode | Secure cookie, trusts one proxy | JEST environment | ✅ |
+| S9 | Any failed request (4xx/5xx) | One JSON line in `logs/errors.log` + `console.error`; no bodies or secrets | JEST, E2E | ⬜ new |
+| S10 | `errors.log` over 5 MB | Rotated to `.1`, older to `.2`/`.3`, at most 3 kept | JEST | ⬜ new |
 
 ## 7. Mobile and PWA
 | # | Scenario | Expected | Covered by | Status |

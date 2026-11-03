@@ -18,6 +18,7 @@ Read in this order. Every v1 code change must trace back to one of these docs (s
 | 11 | [agent_spec.md](agent_spec.md) | Booking assistant (AI agent): scope, guardrails, RBAC, Cent AI, decisions | ✅ Built |
 | 12 | [test_scenarios_app.md](test_scenarios_app.md) | Every guest/admin scenario: tested, where, and still to test | ✅ |
 | 13 | [test_scenarios_assistant.md](test_scenarios_assistant.md) | Every guest → AI → API scenario, live AI runs, still to test | ✅ |
+| 14 | [e2e_spec.md](e2e_spec.md) | Real end-to-end suite (`resortos-booking-e2e`): no mocking, test database, videos, results | ✅ |
 | — | [../AGENTS_TO_BE_USED.md](../AGENTS_TO_BE_USED.md) | Agent skills and when to use them | ✅ |
 
 **Reference only (Bahasa, hospital template):** `alur_kerja_workflow.md`, `sistem_audit_audit_trail.md`, `spesifikasi_keamanan_security.md`, `rencana_pengujian_testing.md`.

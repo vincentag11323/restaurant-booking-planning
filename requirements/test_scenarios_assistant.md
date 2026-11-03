@@ -34,7 +34,8 @@ A guest chats with the assistant (`POST /chat`, email required, phone optional).
 | F2 | Requested sitting full | Up to 3 real alternatives (same day, other room, other branch, next days), each ready to confirm | AGENT-UNIT alternatives, CHAT | ✅ (live ⬜ E3) |
 | F3 | Nothing nearby can seat the party | "nothing nearby has space either" | CHAT | ✅ |
 | F4 | Last tables taken between read-back and "yes" | "Someone just took the last space" plus alternatives | CHAT | ✅ |
-| F5 | Email already has 2 upcoming assistant bookings | Warned before drafting, and refused at confirm | CHAT, API agent, JEST agent | ✅ |
+| F5 | Signed-up email already has 2 upcoming assistant bookings | Warned before drafting, and refused at confirm | CHAT, API agent, JEST agent | ✅ |
+| F14 | Email that **hasn't signed up** asks for a second booking | "This email already has a booking made with the assistant. To book a different time, sign up with this email in the app, cancel that booking there, then ask me again." (no details of the first booking shown) | CHAT, API agent, JEST agent, E2E | ⬜ new rule |
 | F6 | Two confirmations for one email at the same moment | Cap still holds (2 booked, 1 refused) | JEST agent | ✅ (real Postgres ⬜) |
 | F7 | Confirmation retried after a timeout | Same booking returned, never two | API agent, JEST agent, CHAT | ✅ |
 | F8 | Booking API down | "Nothing was booked; please try again" (502) | CHAT, AGENT-UNIT booking_api | ✅ |
