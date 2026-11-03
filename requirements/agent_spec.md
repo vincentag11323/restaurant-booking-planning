@@ -141,7 +141,8 @@ The email and phone are used only for the booking and its confirmation. They're 
 ```
 resortos-booking-agent/
   src/
-    types/          # BookingDraft, ChatRequest, Slot, Branch... (own copies, decoupled)
+    types/          # llm.ts (built), BookingDraft, ChatRequest, Slot, Branch... (own copies, decoupled)
+    llm/            # cent_ai_api.ts (built): the ONLY provider-specific file; returns LlmProvider
     config.ts       # env: LLM_*, BOOKING_API_URL, AGENT_API_KEY, rate limits
     guard.ts        # topic classifier
     agent.ts        # Mastra agent + system prompt
@@ -165,7 +166,7 @@ resortos-booking-agent/
 | D2 | Unverified email: confirm immediately, or hold until the guest clicks an emailed link? | **Confirm immediately** with the §5.4 limits (email delivery is still a stub). Revisit when real email is added |
 | D3 | Do "booking questions" include the menu and allergy questions? | **No for v1:** sittings, rooms, availability and booking only. Dietary notes are still accepted as special requests |
 | D4 | Where guests chat | Agent repo is an HTTP service only. A small chat screen is added to `resortos-booking-web` as a separate, later task. Mastra's dev studio is used for testing until then |
-| D5 | Framework | **Mastra** (§6) |
+| D5 | Framework | Revisit: with the provider adapter (§12) in place, the simplest option is **no framework** (our own ~40-line tool loop over `LlmProvider`). Mastra stays the choice if you want its dev studio, memory and workflows |
 | D6 | Test runner for this repo | **Vitest** (native ESM + TypeScript, which suits ESM-only Mastra without extra transforms). Alternative: Jest + `@swc/jest` like the API, if you prefer one tool everywhere |
 | D7 | LLM endpoint | **Cent AI** (cent-ai.dev, owner's provider). See §11. Owner supplies the key and model ID; nothing is hard-coded |
 
@@ -216,3 +217,18 @@ Cent AI's guide: "Pick the one your tool or code already speaks." Same host, sam
 4. Topic-guard output: JSON from the model validated by Zod, with no reliance on provider-specific structured-output flags.
 
 **Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design keeps guest email/phone out of prompts (§5.5).
+
+## 12. Provider Adapter (built 2026-11-03)
+The agent calls a provider-neutral interface, so changing AI vendors means replacing one file:
+
+```ts
+interface LlmProvider {
+  complete(request: { system; messages; tools?; maxOutputTokens? }): Promise<{ text; toolCalls; stopReason; usage: { inputTokens; outputTokens; costUsd? } }>;
+  listModels(): Promise<{ id; capabilities; status?; contextWindow?; ownedBy? }[]>;
+}
+```
+* `src/types/llm.ts`: the neutral types (`LlmMessage`, `LlmTool`, `LlmToolCall`, `LlmResult`, `LlmError` with a `retryable` flag).
+* `src/llm/cent_ai_api.ts`: `createCentAiProvider(config)` and `centAiConfigFromEnv()`. Translates to the Cent AI **Messages** or **Responses** format (per `LLM_API_FORMAT`), maps tool calls and tool results both ways, reads `usage.cost`, and normalises both error shapes (`invalid_api_key`, `rate_limited` + `Retry-After`, `project_budget_exceeded`, `timeout`, `network`, `bad_response`).
+* **Another provider later:** add `src/llm/<provider>_api.ts` exporting a factory that returns `LlmProvider`; the agent code doesn't change.
+* Tests: `tests/cent_ai_api.test.ts` (16 cases, `fetch` mocked, Node's built-in test runner). Live check: `npm run smoke` once `.env` has the key and model.
+
