@@ -263,3 +263,35 @@ date: 2026-11-03
 **Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
 
 **Related:** In-memory PGlite on port 5498 for test isolation; npm test runs Playwright then Jest.
+
+---
+
+## Mobile-Only Frontend + Installable PWA (Owner Request)
+
+**Decision:** Simplify frontend to mobile-first (Pixel 7, 28rem max width), remove all desktop breakpoints, and ship as an installable PWA.
+
+**Scope:** Installable PWA + mobile layout moved into v1. Out of scope: offline booking, offline data sync (availability must be live).
+
+**Architecture:**
+- Bottom tab bar for navigation (guests: Reserve, Bookings, Menu, Profile; admins: Today, Booking log, with Sign out in the header)
+- Bottom-sheet dialogs (change time, release booking, admin booking detail)
+- Admin log refactored from table to card list
+- Sign out in Profile (guests) / header (admins)
+- Removed all Tailwind sm/md/lg breakpoints
+
+**PWA implementation:**
+- vite-plugin-pwa 2.0 with generateSW + autoUpdate
+- Manifest: ResortOS Dining, standalone, theme #1e4636, background #e4eff7
+- App shell precached (15 files, 366 KiB after font trimming to Latin woff2)
+- /api excluded from cache; offline API errors prompt "Check your connection"
+- Icons auto-generated at build from public/favicon.svg (placeholder: place-card motif until owner supplies logo)
+
+**Testing:** Tests run against production build (vite build + preview); service workers blocked except in pwa.spec.ts (tests manifest, icons, registration, offline startup).
+
+**Why:**
+- Owner request: mobile-first reflects real user base (restaurants, phone-primary customers)
+- PWA allows home-screen install and offline-partial experience (read cached data, show "offline" for live APIs)
+- Offline booking/data stays out: availability changes constantly; don't cache stale tables
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]

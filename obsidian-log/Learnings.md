@@ -415,3 +415,66 @@ Lessons about how to work with this user and project.
 - Automate this in tests: every error path should return valid JSON
 
 **Session:** [[Session Log/2026-11-03#Test Gap Pass + Jest]]
+
+---
+
+## 23. Service Workers Only Exist in Production Builds; Test Against vite build + preview
+
+**Rule:** Service workers (from vite-plugin-pwa) don't run in Vite dev mode. To test PWA behavior, build production (vite build), preview it (vite preview), and block service workers in non-PWA tests.
+
+**Why:**
+- Dev mode skips service worker registration and precaching
+- PWA behavior (offline, manifest, icon generation, update checks) only happens in production
+- If you test against dev mode, mocked API calls see requests that would be cached in production
+- page.route mocks may not match real request patterns
+
+**How to apply:**
+- Create a separate pwa.spec.ts that tests against vite preview (manifest, icons, registration, offline startup)
+- In all other tests, block service workers: `await page.context().clearCookies(); await page.unroute('**/*');` or use `--disable-sw` flag
+- Verify precache size after each font/asset add (check .vite/manifest.json or Lighthouse audit)
+- Don't assume dev-mode behavior matches production; always verify against build output
+
+**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+
+---
+
+## 24. Native <dialog> Focuses First Focusable Element; Autofocus the Title Instead
+
+**Rule:** HTML `<dialog>` elements automatically focus the first focusable element (often a close/submit button). In a scrollable dialog, this scrolls to the bottom. Autofocus the title or a neutral element instead.
+
+**Why:**
+- Bottom-sheet dialogs (reschedule, menu, allergies) are long and scroll to the bottom
+- Browser focuses the Close button (at the bottom) on open
+- User sees the bottom of the form, not the title or first input
+- Breaks the UX expectation: dialog opens at the top
+
+**How to apply:**
+- Add `autoFocus` to the sheet title or a neutral container, not action buttons
+- Pattern: `<dialog><div autoFocus tabIndex={-1}>Sheet Title</div> ... <button>Close</button></dialog>`
+- Or wrap the focusable title in a `<h1>` with `autoFocus`
+- Test on a real device or with Playwright `page.goto(...); expect(page.locator('h1')).toBeFocused()`
+- Note: focusing an unfocusable element (tabIndex={-1}) still scrolls to it
+
+**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+
+---
+
+## 25. Check Precache Size After Adding a PWA; Font Packages Ship Many Subsets
+
+**Rule:** When implementing PWA with vite-plugin-pwa, measure precache size and trim unnecessary assets (especially font subsets).
+
+**Why:**
+- Font packages (Google Fonts, Cormorant Garamond, Source Sans 3) include many subsets: Latin, Cyrillic, Greek, Arabic, etc.
+- Precaching all subsets bloats the service worker and app shell
+- Example: fonts alone were 872 KiB; trimmed to Latin woff2 = 366 KiB total shell
+- Users on slow connections wait for precache download before app is usable
+
+**How to apply:**
+- Build the PWA: `vite build`
+- Check `.vite/manifest.json` and service worker output for asset sizes
+- Use Lighthouse DevTools audit to see precache contents
+- Import only necessary font subsets: `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;700&display=swap&subset=latin');`
+- Use `woff2` (smaller than woff, supported in all modern browsers)
+- Re-check after every significant asset add (icons, new font, large image)
+
+**Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
