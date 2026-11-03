@@ -295,3 +295,53 @@ date: 2026-11-03
 
 **Date:** 2026-11-03  
 **Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+
+---
+
+## Assistant RBAC: AGENT Role with Exactly Two Permissions
+
+**Decision:** Create AGENT role with exactly two API permissions:
+1. POST /api/agent/reservations (book on guest's behalf, Idempotency-Key, max 2 upcoming per email)
+2. POST /api/agent/guests/lookup (exact email only, returns exists + upcomingAssistantBookings)
+
+AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
+
+**Why:**
+- Owner rule: listing/searching guests is admin-only (privacy, scalability)
+- AGENT needs to book without reading all guests (supply exact email, not search)
+- Limits surface area: two endpoints, no admin data exposure, no write access to other entities
+- Idempotency-Key + max 2 upcoming prevent duplicate bookings and spam
+
+**Implementation:**
+- RBAC permission table with roles USER, ADMIN, AGENT
+- Password-less guest accounts per email; sign-up claims account + retains bookings
+- Reservations record source (APP/AGENT) and createdById for audit trail
+- Admins no longer create bookings (read-only)
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+
+---
+
+## Keep Cent AI Messages Format for DeepSeek; Handle Unsigned Thinking Blocks in SDK
+
+**Decision:** Use Cent AI Messages format for DeepSeek (not Responses API) and handle unsigned thinking blocks in cent_ai_api.ts rather than switching to a different format.
+
+**Why:**
+- Cent AI Messages format uses ~3.3x fewer input tokens than Responses API
+- DeepSeek via Cent AI returns thinking blocks without SDK signature
+- Anthropic SDK (strict provider) rejects unsigned blocks
+- Fix: drop unsigned thinking blocks in cent_ai_api.ts; regression test replays captured response
+- Switching to Responses API would negate the token savings
+
+**Implementation:**
+- cent_ai_api.ts: filters out unsigned thinking blocks before passing to SDK
+- Regression test: replay captured DeepSeek response with fix verified without spending calls
+- No hand-written request translation (earlier code removed)
+
+**Tradeoff:**
+- Token savings (Messages) > SDK validation strictness (one-time filter fix)
+- Cost-effective for high-volume agent runs
+
+**Date:** 2026-11-03  
+**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]

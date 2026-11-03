@@ -478,3 +478,68 @@ Lessons about how to work with this user and project.
 - Re-check after every significant asset add (icons, new font, large image)
 
 **Session:** [[Session Log/2026-11-03#Mobile-Only PWA]]
+
+---
+
+## 26. Never Truncate Output of Budget-Limited Runs; Pipe to File or tail
+
+**Rule:** When running a task with a fixed budget (AI calls, money, timeouts), never use `head` to truncate output. The summary is your evidence that the budget was spent correctly.
+
+**Why:**
+- Agent end-to-end run had max 5 calls budget; used `head -40` to limit output
+- Lost the actual call count; couldn't verify budget spent vs. wasted
+- Summary line (call count, cost, failures) is critical evidence of correctness
+- Truncation hides the proof
+
+**How to apply:**
+- If output is too long, pipe to a file: `agent run > run.log 2>&1`
+- Or use `tail` to see the end: `agent run | tail -50`
+- Or save the full output for later inspection: `agent run | tee run.log`
+- Always preserve the final summary line showing calls spent, cost, pass/fail
+- Log the call count explicitly in reports for budget-constrained tasks
+
+**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+
+---
+
+## 27. Gateway Format Translation Can Return Provider-Shaped Data That SDK Rejects
+
+**Rule:** When a gateway translates API formats (e.g., Cent AI Messages → Anthropic SDK), the gateway may return provider-specific data that strict SDK validation rejects. Test the fix against captured responses in a unit test, not live.
+
+**Why:**
+- DeepSeek via Cent AI Messages returns thinking blocks without SDK signature
+- Anthropic SDK (strict provider) rejects unsigned blocks
+- Live end-to-end runs are expensive; spend budget on confirming the fix works
+- Captured response + unit test = free verification
+
+**How to apply:**
+- When SDK rejects gateway output: capture the raw response (save it, copy from error)
+- Write a unit test that replays the captured response through the fix
+- Verify the fix produces valid SDK input (drop unsigned thinking blocks)
+- Regression test prevents the bug from recurring when gateway updates
+- Only run live end-to-end after unit test passes
+
+**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
+
+---
+
+## 28. Adding a Test File Can Change Test Order and Expose State-Coupling Bugs
+
+**Rule:** When you add a new test file (or reorder test suites), existing tests may start failing. These are state-coupling bugs hidden by test order luck.
+
+**Why:**
+- Jest runs tests in alphabetical file order (or random with --randomize)
+- Adding AGENT_CAPABILITIES.md (before test files alphabetically) or test file changes order
+- Failed-login alert de-duplication bug surfaced when test order changed
+- The failed-login alert de-duplication counted every SECURITY_ALERT from the IP (including bulk-export alerts from the admin tests), so a new test order suppressed it. The test data was fine; the query was too broad
+- The bug existed all along; test order just made it visible
+
+**How to apply:**
+- When you see a flaky test that "worked before": check test order
+- Add a new test file and re-run: does an unrelated test fail?
+- If yes: there's a shared state bug (global counter, database not cleaned, timer not reset)
+- Run tests multiple times with different seeds: `jest --randomize --testTimeout=10000`
+- Fix the cause: here, scope the query to the alert's own reason. Tests sharing one database are intended; give each its own dates/emails
+- Mark state-coupled bugs as high priority (they hide until conditions align)
+
+**Session:** [[Session Log/2026-11-03#Booking Assistant Built]]
