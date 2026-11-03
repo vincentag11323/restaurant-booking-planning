@@ -14,7 +14,27 @@ This doc records the choices that turn the PRD into concrete, buildable rules. G
 
 **Decision:** **PostgreSQL 17 + Prisma ORM 7** (as already stated in the PRD). The core reason: a single `UNIQUE (tableId, slotStart)` constraint makes double-booking impossible even under concurrent requests, with no locks or queues to write.
 
-Local dev: `docker compose up -d` (file included in the backend repo), or any hosted Postgres URL in `.env`.
+Local dev: `docker compose up -d` (file included in the backend repo), `brew install postgresql@17`, or any hosted Postgres URL (e.g. Neon free tier) in `.env`.
+
+### 1.1 ORM: Prisma vs "just Zod" (decided 2026-11-03: **keep Prisma**)
+Zod and Prisma are different layers, and **both** are used:
+* **Zod** validates *incoming* data at runtime (request bodies, query strings). It cannot talk to a database.
+* **Prisma** is the DB layer: typed queries, transactions, generated migrations.
+
+The real alternative was **Zod + raw SQL (`pg`)**. Prisma was kept because:
+* Migrations are generated from `schema.prisma`, which doubles as living DB documentation.
+* Query results are typed automatically, so a schema change breaks the build, not production.
+* The admin log's optional filters are plain objects. That avoids hand-building `WHERE $1…$n` strings, the most error-prone code in this app.
+* Unique-violation error code `P2002` maps cleanly to the PRD's `400 Table overlap conflict`.
+* The PRD already specifies it.
+
+Accepted costs: a `prisma generate` step and the Prisma 7 driver-adapter setup (`@prisma/adapter-pg`). Version is **pinned to 7.10.1** because npm's `latest` tag currently points to an 8.0 release candidate. Postgres-specific features (the audit-log trigger) live in a hand-edited SQL migration.
+
+### 1.2 Schema rules (see `data_model.md`)
+* All timestamps use `@db.Timestamptz` (Prisma's default `timestamp` has no time zone).
+* Reservations get a short unique human code (`RSV-` + 6 chars from an unambiguous alphabet), so guests can read it out to the host. The internal `cuid` stays the primary key.
+* In production, the app's DB role gets `INSERT, SELECT` only on `AuditLog`, in addition to the immutability trigger.
+* The `UNIQUE (tableId, slotStart)` guard is sufficient **only because slots are fixed**. Flexible slots (out of scope) would need a `tstzrange` exclusion constraint (`btree_gist`).
 
 ## 2. Booking Rules (resolving PRD ambiguities)
 * **Fixed 2.5-hour slots** (restaurant local time, `UTC+07:00` by default):
