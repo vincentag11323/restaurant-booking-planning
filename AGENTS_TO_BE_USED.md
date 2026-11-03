@@ -9,6 +9,7 @@ Which agent skills are used, **when**, and **what they may not do**. Applies to 
 |---|---|---|
 | **antislop** | `antislop` (core) + `antislop-code`, `antislop-ui`, `antislop-copywriting`, `antislop-layoutmobile` | Mode: **DURING** (session choice). Delivery Gate runs before every UI hand-off |
 | **grill-me-with-docs** | `/mattpocock-skills:grill-with-docs` (user-invoked only) → calls `mattpocock-skills:grilling` + `mattpocock-skills:domain-modeling` | Agent calls `grilling` / `domain-modeling` directly |
+| **grill-me** | `/mattpocock-skills:grill-me` (user-invoked only) → calls `mattpocock-skills:grilling` | Stateless interview for a loose idea; writes no files. Use `grill-with-docs` when aligning against this repo |
 | **test-driven-development** | `mattpocock-skills:tdd` | Vertical slices, test at agreed seams (see §3.3) |
 | **self-improving-agent** | `ecc:continuous-learning-v2`, `ecc:learn-eval` + Haiku Obsidian logger (§4) | |
 | **code-simplify** | `/simplify`, `ecc:code-simplifier` | |
@@ -29,7 +30,7 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 
 ## 3. Skills — Purpose, Trigger, Boundaries
 
-### 3.1 grill-me-with-docs — *Phase 1*
+### 3.1 grill-me / grill-me-with-docs — *Phase 1*
 * **Purpose:** Interrogate the plan against `requirements/*` **before** any code: find ambiguities, contradictions, missing edge cases.
 * **Trigger:** Start of every feature, and whenever the PRD/specs change.
 * **Output:** Questions to the user. Answers are written back into the relevant spec doc and committed.
