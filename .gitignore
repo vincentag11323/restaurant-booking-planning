@@ -3,5 +3,6 @@
 resortos-booking-api/
 resortos-booking-web/
 resortos-booking-agent/
+resortos-booking-e2e/
 # Obsidian app state
 obsidian-log/.obsidian/
