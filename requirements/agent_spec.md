@@ -121,8 +121,9 @@ User text is treated as data. Whatever the message says ("ignore your rules…",
 | Limit | Where |
 |---|---|
 | 10 chat requests / minute / IP | agent |
+| **30 chat requests / 30 minutes per chat session (the guest's email)** (owner rule, 2026-11-03). The IP limit stays because an email can be made up | agent |
 | 3 assistant bookings / hour / IP | agent |
-| **1** upcoming assistant booking for an email that hasn't signed up; **2** once signed up (owner rule, 2026-11-03). Over the limit the guest is told to sign up, cancel the existing booking in the app, then ask again. The assistant never cancels (the email is unverified) | backend |
+| **1** upcoming assistant booking for an email that hasn't signed up; **3** once signed up (owner rules, 2026-11-03; more looks like spam). Over the limit the guest is told to sign up, cancel the existing booking in the app, then ask again. The assistant never cancels (the email is unverified) | backend |
 | Party size and window rules | backend (existing) |
 | Unverified email risk | See decision D2 |
 
