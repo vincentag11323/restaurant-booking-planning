@@ -121,7 +121,7 @@ FOR EACH ROW EXECUTE FUNCTION audit_log_immutable();
 * 108 `DiningTable` rows.
 * ~10 `MenuItem` rows: Chicken Steak, Beef Steak, Barramundi, Fish & Chips, Classic Burger, plus seasonal fine-dining dishes, with allergen tags.
 * 1 `ADMIN` user from `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-* 1 `AGENT` user (the AI booking assistant) from `AGENT_EMAIL` / `AGENT_PASSWORD`.
+* 1 `AGENT` user (the AI booking assistant, `assistant@resortos.internal`): no password, `apiKeyHash` = SHA-256 of `AGENT_API_KEY`.
 
 ## 5. Migrations
 * `prisma migrate dev` generates migrations from the schema. The trigger SQL is appended to the init migration by hand.

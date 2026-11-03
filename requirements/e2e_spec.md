@@ -48,4 +48,4 @@ The assistant tests use the real model with **no fixed call cap**: they run unti
 | AI busy / budget used up (F9, F10) | Would require draining the owner's key |
 | Booking API down mid-chat (F8) | Stopping the shared API would break the other tests |
 | Rate limits (A13, X8) | The run raises limits so the suite isn't throttled |
-| Real token expiry (A8) and true parallel races (B9, M6, F6) | Need time or real PostgreSQL; tracked as to-be-tested items |
+| True parallel races (B9, M6, F6) | Need time or real PostgreSQL; tracked as to-be-tested items |

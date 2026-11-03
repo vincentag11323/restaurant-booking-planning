@@ -22,10 +22,10 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | A4 | Invalid phone number | "phone: Invalid phone number" | API platform, JEST agent | ✅ |
 | A5 | Wrong password / unknown email | Same "Invalid email or password", same timing | API auth, JEST auth | ✅ |
 | A6 | Email typed in capitals | Same account (stored lowercase) | JEST auth | ✅ |
-| A7 | Reload the page while signed in | Still signed in (refresh cookie) | WEB session-and-states | ✅ 👁 |
-| A8 | Access token expires (15 min) | Refreshed and the request retried | WEB session-and-states (simulated) | ✅ |
-| A9 | Refresh also fails | Sent to sign in | WEB session-and-states | ✅ |
-| A10 | Sign out | Back to sign in; pages protected again; refresh stops working | API platform, JEST auth, WEB session-and-states | ✅ 👁 |
+| A7 | Reload the page while signed in | Still signed in (session cookie, checked with `GET /me` on load) | WEB session-and-states | ✅ 👁 |
+| A8 | Session ends (fixed 1 hour after sign-in) | Screen keeps what it shows; the next server call sends the guest to sign in | WEB session-and-states (simulated) | ✅ |
+| A9 | Page load without a valid session | Sent to sign in | WEB session-and-states | ✅ |
+| A10 | Sign out | Back to sign in; pages protected again; the session cookie is cleared | API platform, JEST auth, WEB session-and-states | ✅ 👁 |
 | A11 | Sign up with an email the assistant booked for | Claims the guest account; assistant bookings appear in "My bookings" | API agent, JEST agent | ✅ |
 | A12 | 10 failed logins from one IP in 5 minutes | One security alert in the audit log | JEST auth | ✅ |
 | A13 | Too many auth attempts | 429 with a JSON message | JEST environment | ✅ |
@@ -110,8 +110,8 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | T4 | **Accessibility audit** with axe and a screen reader (VoiceOver, TalkBack) | Roles and labels are tested, not the full experience | axe in Playwright + manual pass |
 | T5 | **Visual regression** of the main screens | Behaviour is tested, pixels aren't | Playwright `toHaveScreenshot()` |
 | T6 | **Load test**: 500 concurrent users at dinner time, p95 < 300 ms | testing_plan.md target, not yet measured | k6 or Artillery on staging |
-| T7 | **Real 15-minute token expiry** and 7-day refresh | Expiry is simulated in UI tests | Manual, or a test with short TTLs |
-| T8 | **HTTPS deployment**: same-site refresh cookie, CORS, `TRUST_PROXY` | Only localhost so far | Staging smoke test |
+| T7 | **Real session expiry** (1 hour) | Expiry is simulated in UI tests | e2e with `SESSION_TTL=8s` |
+| T8 | **HTTPS deployment**: same-site session cookie, Origin rule, CORS, `TRUST_PROXY` | Only localhost so far | Staging smoke test |
 | T9 | **CSV opened in Excel / Google Sheets** | Formula neutralising is unit-tested, not opened in apps | Manual |
 | T10 | **Penetration test / OWASP ZAP scan** | security_spec.md requires one before launch | ZAP baseline on staging |
 | T11 | **UAT** with restaurant staff and a few guests | Real-world fit | Staging, guided session |
@@ -137,6 +137,6 @@ Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results with 
 | T4 accessibility (axe, WCAG 2 A/AA, 7 screens) | ✅ no violations at all (screen-reader pass still manual) |
 | T5 visual regression | ✅ baselines recorded for sign-in, register, chat |
 | T6 load (autocannon, test API on PGlite) | ✅ 0 errors / 0 non-2xx. Availability ~1,000 req/s (p99 61 ms, 50 connections); menu ~8,000 req/s; **sign-in ~10 req/s, p50 ~0.9 s** (bcrypt cost 12 is CPU-bound) |
-| T7 real token expiry (8 s tokens) | ✅ refresh + retry worked after expiry |
+| T7 real session expiry (8 s sessions) | to be re-run: next server call after expiry should send the guest to sign in |
 | Still needs staging or people | T1 real phones, T8 HTTPS deploy, T9 CSV in Excel, T10 ZAP scan, T11 UAT |
 

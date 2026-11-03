@@ -27,9 +27,9 @@ ResortOS AI lets restaurant guests (Users) browse the menu, reserve tables and m
 
 | Area | Feature | Notes |
 |---|---|---|
-| **Auth** | Guest registration & login (email + password) | bcrypt hashing, 15-min JWT access token + 7-day refresh cookie |
+| **Auth** | Guest registration & login (email + password) | bcrypt hashing, HttpOnly session cookie fixed at 1 hour (no refresh) |
 | | Admin login | Admin accounts are created by seed script only |
-| | Logout, token refresh | |
+| | Logout | |
 | **Profile** | View/edit name, phone, allergy list | |
 | **Booking** | Select branch, sector, date, fixed 2.5-h slot, party size (1–50), special requests | Slots: 11:00, 13:30, 17:00, 19:30 local time |
 | | Slot availability view (free tables/rooms per slot) | |

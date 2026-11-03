@@ -23,7 +23,7 @@ The app stores guest personal data (name, email, phone number, allergy informati
 * **Data in Transit:** TLS 1.2 or 1.3 (HTTPS) for all API and web traffic, terminated at the hosting provider.
 * **Data at Rest:** Use a managed PostgreSQL provider with storage-level AES-256 encryption enabled by default. There is no app-level column encryption in v1.
 * **Passwords:** Hashed with **bcrypt** (cost factor 12). Never stored or logged in plaintext.
-* **Secrets:** JWT secrets and DB credentials are provided via environment variables and never committed to Git.
+* **Secrets:** `SESSION_SECRET`, `AGENT_API_KEY` and DB credentials are provided via environment variables and never committed to Git.
 
 ## 3. Application Hardening
 * All request bodies and query strings are validated with **Zod** schemas.

@@ -3,8 +3,8 @@
 
 Base URL: `/api`. JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
 
-**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production), valid **1 hour from sign-in** and never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>` (only its SHA-256 is stored). `Authorization: Bearer` is not accepted.  
-**CSRF:** `SameSite=Lax` plus an origin rule: a non-GET request whose `Origin` header isn't `CORS_ORIGIN` gets `403 Cross-origin request blocked`.  
+**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production), valid **1 hour from sign-in** and never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>` (only its SHA-256 is stored; a wrong key gets `401 Invalid API key`). `Authorization: Bearer` is not accepted. No cookie → `401 Authentication required`; a forged or expired cookie → `401 Invalid or expired token`; a valid cookie for a deleted account → `401 Invalid or expired token`.  
+**CSRF:** `SameSite=Lax` plus an origin rule: a request other than GET/HEAD/OPTIONS whose `Origin` header isn't `CORS_ORIGIN` gets `403 Cross-origin request blocked`.  
 **Errors:** always `{ "message": string }`, using 400 / 401 / 403 / 404 (see `PRD_BOOKING_v1.md` §4.2).
 
 Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN · 🤖 AGENT (the AI booking assistant's service account)
