@@ -3,18 +3,16 @@
 
 Which agent skills are used, **when**, and **what they may not do**. Applies to both repos (`resortos-booking-api`, `resortos-booking-web`).
 
-## 1. Install Status (checked 2026-11-03)
+## 1. Install Status (updated 2026-11-03)
 
-| Requested skill | Status | Use this now |
+| Requested skill | Installed as | Notes |
 |---|---|---|
-| **antislop** | ❌ Not installed | Install before Phase 3. Until then, use the manual checklist in §3.5 |
-| **grill-me-with-docs** | ❌ Not installed | Install before Phase 1. Until then, use the manual grill in §3.1 |
-| **test-driven-development** | ✅ Equivalent installed | `ecc:tdd-workflow` (skill), `ecc:tdd-guide` (agent) |
-| **self-improving-agent** | ✅ Equivalent installed | `ecc:continuous-learning-v2`, `ecc:learn-eval` + the Haiku Obsidian logger (§4) |
-| **code-simplify** | ✅ Equivalent installed | `/simplify` (skill), `ecc:code-simplifier` (agent) |
-| **spec-driven-development** | ✅ Equivalent installed | `ecc:contract-first`, `ecc:intent-driven-development` |
-
-> When `antislop` / `grill-me-with-docs` are installed, replace the "manual" fallbacks below with the real skills and update this table.
+| **antislop** | `antislop` (core) + `antislop-code`, `antislop-ui`, `antislop-copywriting`, `antislop-layoutmobile` | Mode: **DURING** (session choice). Delivery Gate runs before every UI hand-off |
+| **grill-me-with-docs** | `/mattpocock-skills:grill-with-docs` (user-invoked only) → calls `mattpocock-skills:grilling` + `mattpocock-skills:domain-modeling` | Agent calls `grilling` / `domain-modeling` directly |
+| **test-driven-development** | `mattpocock-skills:tdd` | Vertical slices, test at agreed seams (see §3.3) |
+| **self-improving-agent** | `ecc:continuous-learning-v2`, `ecc:learn-eval` + Haiku Obsidian logger (§4) | |
+| **code-simplify** | `/simplify`, `ecc:code-simplifier` | |
+| **spec-driven-development** | `ecc:contract-first`, `ecc:intent-driven-development`, `mattpocock-skills:code-review` (Spec axis) | |
 
 ## 2. Workflow (per feature)
 
@@ -36,7 +34,6 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 * **Trigger:** Start of every feature, and whenever the PRD/specs change.
 * **Output:** Questions to the user. Answers are written back into the relevant spec doc and committed.
 * **Boundaries:** Asks; never decides scope on its own. Never writes code.
-* **Manual fallback:** For the feature, list (1) every input and its limits, (2) every error case and exact message in `api_spec.md`, (3) conflicts between PRD/v1 PRD/specs, (4) anything ❌ out-of-scope it touches. Ask the user about each unknown.
 
 ### 3.2 spec-driven-development — *Phase 1*
 * **Purpose:** Specs are the source of truth. `data_model.md` → `schema.prisma`, `api_spec.md` → routes + Zod schemas + tests, `ui_spec.md` → screens.
@@ -44,7 +41,7 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 * **Boundaries:** No endpoint, column or screen that isn't in a spec. If one is needed: update the spec → commit → then code. Never build ❌ items from PRD v1 §3.2.
 
 ### 3.3 test-driven-development — *Phase 2*
-* **Purpose:** Red → green → refactor with **Playwright only** (`@playwright/test`):
+* **Purpose:** Red → green with **Playwright only** (`@playwright/test`), one vertical slice at a time. Agreed seams (from `testing_plan.md`): pure slot/allocation functions, the HTTP API, and the rendered UI with a mocked API.
   * Backend: `tests/unit/*.spec.ts` (pure slot/allocation logic) → `tests/api/*.spec.ts` (real API + test DB).
   * Frontend: `tests/e2e/*.spec.ts` with the API mocked via `page.route`.
 * **Trigger:** Every behaviour change.
@@ -59,7 +56,7 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 * **Purpose:** Strip AI "slop" from code **and** docs: filler comments that restate code, over-hedged prose, unused helpers, generic names, speculative "future-proofing", emoji/marketing tone in code.
 * **Trigger:** After code-simplify, and on every doc edit.
 * **Boundaries:** Wording/cleanup only. No logic changes, no scope changes.
-* **Manual fallback checklist:** ☐ every comment explains *why*, not *what* ☐ no unused exports/params ☐ no TODOs without an owner ☐ names match domain terms (reservation, slot, sector, covers) ☐ docs: short sentences, no "robust/seamless/leverage".
+* **UI:** direction lives in `resortos-booking-web/DESIGN.md` (warm fine dining, light blue background). No em dashes in UI copy (R-02).
 
 ### 3.6 self-improving-agent — *Phase 4*
 * **Purpose:** Capture what went wrong/right so the next session does better.
@@ -78,6 +75,7 @@ A feature = one ✅ row of `requirements/PRD_BOOKING_v1.md` §3.1. Every phase e
 
 | Agent | Repo | When |
 |---|---|---|
+| `mattpocock-skills:code-review` | both | end of each repo milestone (Standards + Spec) |
 | `ecc:typescript-reviewer` | both | every feature |
 | `ecc:database-reviewer` | api | schema / migration / query changes |
 | `ecc:security-reviewer` | api | auth, admin, export, anything touching personal data |
