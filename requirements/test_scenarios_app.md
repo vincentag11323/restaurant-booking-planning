@@ -22,7 +22,7 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | A4 | Invalid phone number | "phone: Invalid phone number" | API platform, JEST agent | ✅ |
 | A5 | Wrong password / unknown email | Same "Invalid email or password", same timing | API auth, JEST auth | ✅ |
 | A6 | Email typed in capitals | Same account (stored lowercase) | JEST auth | ✅ |
-| A7 | Reload the page while signed in | Still signed in (session cookie, checked with `GET /me` on load) | WEB session-and-states | ✅ 👁 |
+| A7 | Reload the page while signed in | Still signed in (session cookie, checked with `GET /api/user/me` on load) | WEB session-and-states | ✅ 👁 |
 | A8 | Session ends (fixed 1 hour after sign-in) | Screen keeps what it shows; the next server call sends the guest to sign in | WEB session-and-states (simulated) | ✅ |
 | A9 | Page load without a valid session | Sent to sign in | WEB session-and-states | ✅ |
 | A10 | Sign out | Back to sign in; pages protected again; the session cookie is cleared | API platform, JEST auth, WEB session-and-states | ✅ 👁 |
@@ -87,18 +87,18 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | S1 | Guest opens another guest's booking (IDOR) | 404 for read, reschedule, cancel | API reservations | ✅ |
 | S2 | Guest opens admin pages or routes | Redirected / 403 | API admin, WEB admin | ✅ |
 | S3 | Forged or missing token | 401 | API platform, JEST http-basics | ✅ |
-| S4 | Assistant's account on any non-assistant route | 403 everywhere | API agent | ✅ |
+| S4 | Assistant's key on `/api/user/*` or `/api/admin/*` | `401 Authentication required` (the key isn't read there) | API agent | ⬜ changed |
 | S5 | Sign up as the assistant's or an admin's email | "Email is already registered" | API agent | ✅ |
 | S6 | Audit log edited or deleted | Refused by the database | JEST domain | ✅ |
 | S7 | Malformed JSON, unknown route, security headers | JSON 400/404, `nosniff`, no `x-powered-by` | API platform | ✅ |
 | S8 | Production mode | Secure cookie, trusts one proxy | JEST environment | ✅ |
 | S9 | Any failed request (4xx/5xx) | One `[METHOD]`-tagged JSON line in `logs/errors.log` + `console.error`; no bodies or secrets | JEST, E2E | ⬜ new |
 | S16 | Every successful create / update / delete (table in api_spec §8.1) | One `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` + `console.log`, with the `action`; nothing for GETs; no personal data or secrets | JEST | ⬜ new |
-| S11 | Guest or admin cookie on `/agent/*` | `403 Forbidden` | API agent, JEST | ⬜ new |
-| S12 | Assistant key on public routes (`/menu`, `/availability`, `/auth/login`) | `403 Forbidden` | API agent, JEST | ⬜ new |
-| S13 | Old or forged cookie on a public route (`/auth/login`, `/menu`) | Ignored: sign-in and menu work | JEST | ⬜ new |
+| S11 | Guest or admin cookie on `/api/agent/*` | `401 Authentication required` (the cookie isn't read there) | API agent, JEST | ⬜ new |
+| S12 | Anyone, including the assistant, on `/api/public/*` (menu, availability, health) | Works with no cookie or key; any cookie or key sent is not read | API agent, JEST | ⬜ new |
+| S13 | Old or forged cookie on `/api/auth/login` or `/api/public/menu` | Ignored: sign-in and menu work | JEST | ⬜ new |
 | S14 | A key in `ApiKey` whose owner isn't `AGENT` | `401 Invalid API key` | JEST | ⬜ new |
-| S15 | User row removed while signed in | `401` on every route (sessions and key deleted with the user) | JEST | ⬜ new |
+| S15 | User row removed while signed in | `401 Invalid or expired token` on `/api/user/*` and `/api/admin/*` (sessions and key deleted with the user) | JEST | ⬜ new |
 | S10 | `app.log` or `errors.log` over 5 MB | Renamed to `.1`, the previous `.1` deleted: one live file + one old copy per log | JEST | ⬜ new |
 
 ## 7. Mobile and PWA

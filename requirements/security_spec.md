@@ -14,7 +14,7 @@ The app stores guest personal data (name, email, phone number, allergy informati
 > **Owner request 2026-11-04: server-side sessions and an API key table.**
 > * Sign-out must end the session **at once**: a copied cookie stops working. Sessions live in a `Session` table; the cookie holds a random token and only its SHA-256 is stored. Expiry (1 hour from sign-in) ends a session by itself.
 > * The assistant's key lives in an `ApiKey` table (SHA-256 only). For now one key, owned by the one `AGENT` account; other key owners (vendors, special users) are to be decided later.
-> * One auth middleware on every request checks the caller and passes `{ userId, role }` to the route. `/agent/*` routes are for the assistant only; every other route is for guests and admins only (`api_spec.md`, "Every request").
+> * Routes are grouped, each with its own middleware (`api_spec.md`, "Route groups"): `/api/public/*` has none (menu, availability, health; the assistant may use them), `/api/user/*` and `/api/admin/*` run the sign-in check, `/api/agent/*` runs the agent key check. Each check passes `{ userId, role }` to the route.
 > * `SESSION_SECRET` and JWTs are no longer used.
 
 * **Role-Based Access Control (RBAC):** Three roles, `USER`, `ADMIN` and `AGENT` (the AI booking assistant, planned in `agent_spec.md` §5.5). Routes check permissions; `AGENT` may only book on a guest's behalf and look up one guest by exact email.

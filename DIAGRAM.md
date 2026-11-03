@@ -134,7 +134,7 @@ sequenceDiagram
 
 **Platform**
 * Sessions: one HttpOnly cookie holding a random token; the server keeps a `Session` row per sign-in (SHA-256 of the token), valid 1 hour from sign-in, no refresh, no idle timer. Sign-out deletes the row, so the cookie stops working at once. The assistant uses a seeded API key (`X-Agent-Key`, `ApiKey` table), not a session.
-* One auth middleware on every request works out `{ userId, role }`; `/agent/*` is for the assistant only, every other route for guests and admins only.
+* Route groups, each with its own middleware: `/api/public/*` none (menu, availability, health), `/api/auth/*` rate limit, `/api/user/*` and `/api/admin/*` sign-in check (+ admin check), `/api/agent/*` agent key check.
 * **PWA:** installable, works offline for the app shell only; booking data is always live.
 * Mobile-only layout; English only; prices shown as `Rp 320.000` on every browser.
 * **Logs:** every successful create/update/delete is one `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` (+ `console.log`); every 4xx/5xx is one tagged line in `logs/errors.log` (+ `console.error`). No bodies, secrets or personal data. Each file rotates at 5 MB, keeping one old copy.

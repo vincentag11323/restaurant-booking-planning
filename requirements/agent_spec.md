@@ -16,7 +16,7 @@ A chat assistant that answers **booking questions only** and can **book a table 
 | Capability | Notes |
 |---|---|
 | Answer booking questions | Sittings (11:00, 13:30, 17:00, 19:30, 2.5 h each), branches, Main Hall vs VIP rooms, party size 1–50, the 60-day booking window, how tables are joined |
-| Check live availability | Calls the API's public `GET /api/availability`. It never guesses or caches |
+| Check live availability | Calls the API's public `GET /api/public/availability`. It never guesses or caches |
 | Book on the guest's behalf | Only after it reads the full booking back and the guest explicitly says yes |
 | Take special requests / dietary notes | Passed through to the booking (max 500 chars) |
 | Reply with the reservation code | e.g. `RSV-7K3Q9X`, plus the sitting, room and tables |
@@ -74,7 +74,7 @@ Errors use the same contract as the API: `{ message }` with 400 (bad input), 429
 ### 4.2 Tools the model can call (and nothing else)
 | Tool | Input (Zod) | Calls |
 |---|---|---|
-| `checkAvailability` | `branch`, `sector`, `date` | `GET /api/availability` |
+| `checkAvailability` | `branch`, `sector`, `date` | `GET /api/public/availability` |
 | `proposeBooking` | `branch`, `sector`, `date`, `startTime`, `partySize`, `specialRequests?` | Nothing. It validates and returns a `BookingDraft` for read-back |
 
 The actual booking is **not** a model tool (§5.3).
@@ -87,7 +87,7 @@ The backend learns a third role, **`AGENT`** (§5.5), and two agent-only endpoin
 | POST | `/api/agent/reservations` | `reservation:create_on_behalf` | Book for a guest by email. Body: `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp }`, header `Idempotency-Key` |
 | POST | `/api/agent/guests/lookup` | `guest:read_one` | Read **one** guest by **exact** email (body `{ email }`, so the address stays out of URLs and access logs). Returns only `{ exists, upcomingAssistantBookings }` |
 
-* Booking uses the same allocation, capacity and double-booking code as `POST /api/reservations` (shared function, not a copy).
+* Booking uses the same allocation, capacity and double-booking code as `POST /api/user/reservations` (shared function, not a copy).
 * Data model (D1): `User.passwordHash` becomes optional (password-less **guest account**, found or created by email). Sign-up with a guest account's email **claims** it (sets the password), so earlier assistant bookings appear in "My bookings".
 * Each reservation records **who booked it**: `source` (`APP` | `AGENT`) and `createdById` (the guest for app bookings, the agent's service account for assistant bookings).
 * Audit: `CREATE_RESERVATION` with `actorId` = agent account, `metadata: { source: "AGENT", onBehalfOf: <guest id>, clientIp }`.
@@ -302,7 +302,7 @@ interface LlmProvider {
 ### 13.1 Suggesting other sittings, rooms or dates
 Alternatives are found **by code, not by the model**, so suggestions are always real availability. They cost no extra AI calls.
 
-`findAlternatives({ branch, sector, date, startTime, partySize })` reads `GET /api/availability` (at most 6 lookups) and returns up to **3** options that can seat the whole party, in this order:
+`findAlternatives({ branch, sector, date, startTime, partySize })` reads `GET /api/public/availability` (at most 6 lookups) and returns up to **3** options that can seat the whole party, in this order:
 1. **Same day, same room, other sittings**, closest time first ("19:30 is full, 17:00 has room").
 2. **Same day, same branch, other room** (Main Hall ↔ VIP), same sitting first.
 3. **Same day, other branch**, same room and sitting.

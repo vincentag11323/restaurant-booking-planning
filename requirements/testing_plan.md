@@ -21,7 +21,7 @@ Both repositories use **Playwright** (`@playwright/test`) for behaviour tests. T
 * **User Acceptance Testing (UAT):** Restaurant staff and a few real guests try the full booking → arrival flow on a staging environment before public release.
 
 ## 2. Security Testing
-* **Authorization Testing (IDOR):** Ensure Insecure Direct Object Reference is impossible. Example: Guest A changing `/api/reservations/<A's id>` to `<B's id>` must get `404`. Covered by an automated API test.
+* **Authorization Testing (IDOR):** Ensure Insecure Direct Object Reference is impossible. Example: Guest A changing `/api/user/reservations/<A's id>` to `<B's id>` must get `404`. Covered by an automated API test.
 * **Vulnerability Scanning:** Run `npm audit` in CI on both repos, and enable Dependabot alerts for known CVEs.
 * **Penetration Testing:** A lightweight third-party or OWASP ZAP scan before the first public launch.
 
