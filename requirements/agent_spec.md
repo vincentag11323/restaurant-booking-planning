@@ -189,4 +189,4 @@ Each step is test-first and ends in a commit; nothing ships to guests until step
 | 5 | Eval set (~40 prompts) against the real model | agent | All refusals correct, zero unconfirmed bookings, cost per conversation recorded |
 | 6 | Chat screen in the PWA (D4) | web | Playwright UI tests with the agent mocked |
 
-Ports: API 4000, web 5173, **agent 4300** (4100 and 4200 are already used by test servers).
+Ports: API 4000, web 5173, **agent 4300** (4100 is the API test server; 5180 the web test server).
