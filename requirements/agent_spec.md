@@ -140,8 +140,8 @@ Three roles. Every route checks a **permission**, and roles map to permissions i
 | Public: availability, menu | ✅ | ✅ | ✅ |
 
 * **Everything else is `403` for `AGENT`**: no reading or changing reservations, no admin routes, no profile, no listing or searching users. A test calls every other route with an agent token and expects `403`.
-* **Now:** a seeded service account (`assistant@resortos.internal`, role `AGENT`, password from env) signs in through the normal login and gets the usual 15-minute JWT, so the backend knows the request comes from the AI. When a call returns `401`, the agent simply signs in again (no refresh cookie to manage). The account can't be created by sign-up and has no "My bookings".
-* **Later (planned):** replace the login with a **scoped API key** (hashed in the DB, revocable, rate-limited) carrying exactly these two permissions. Routes check permissions, not how the caller authenticated, so the swap doesn't touch the endpoints.
+* **API key (approved 2026-11-03):** the seed creates the service account (`assistant@resortos.internal`, role `AGENT`, no password) and stores the SHA-256 of `AGENT_API_KEY`. The agent sends `X-Agent-Key: <AGENT_API_KEY>` on every call; no sign-in, no expiry. Rotate by changing the key in both `.env` files and re-running the seed. The account can't sign in, can't be created by sign-up and has no "My bookings".
+* Routes check permissions, not how the caller authenticated.
 * **One user at a time, never more (owner rule, 2026-11-03):**
   * Exact match only. The email is validated as an email and compared exactly (case-insensitive): no wildcards, prefixes or partial matches, and one email per request.
   * Minimal answer: `{ exists, upcomingAssistantBookings }`. No name, phone, booking details or IDs, because the email in a chat is **unverified** and whatever the agent reads can end up in the reply to whoever typed it.
@@ -175,7 +175,7 @@ resortos-booking-agent/
   src/
     types/          # llm.ts (built), BookingDraft, ChatRequest, Slot, Branch... (own copies, decoupled)
     llm/            # cent_ai_api.ts (built): the ONLY provider-specific file; returns LlmProvider
-    config.ts       # env: LLM_*, BOOKING_API_URL, AGENT_EMAIL/AGENT_PASSWORD (service account), AGENT_DRAFT_SECRET, rate limits
+    config.ts       # env: LLM_*, BOOKING_API_URL, AGENT_API_KEY (service account key), AGENT_DRAFT_SECRET, rate limits
     guard.ts        # topic classifier
     agent.ts        # Mastra agent + system prompt
     tools/          # checkAvailability, proposeBooking

@@ -38,7 +38,7 @@ The assistant tests use the real model with **no fixed call cap**: they run unti
 | **Accessibility (T4)** | `@axe-core/playwright` on the main screens; no serious or critical violations | Automated audit only; a screen-reader pass stays manual |
 | **Other browsers (T3)** | Key browser scenarios also run on WebKit (iPhone 14) and Firefox | |
 | **Visual regression (T5)** | `toHaveScreenshot()` of sign-in, booking, menu and admin log; the first run records baselines | Kept in `tests/visual/__screenshots__` |
-| **Token expiry (T7)** | API started with `ACCESS_TOKEN_TTL=5s`; the page waits past it and the next action still works (refresh + retry) | Production default stays 15 minutes |
+| **Session expiry (T7)** | API started with `SESSION_TTL=8s`; the page waits past it, keeps showing what it had, and the next server call sends the guest to sign in | Production default stays 1 hour |
 | **Chat screen (C-UI)** | The PWA's `/chat` against the real agent and model | Uses AI calls |
 | **Load (T6)** | `npm run load` (autocannon): availability reads, sign-ins and bookings against the test API, reporting requests/s, p95 latency and errors | Test database is PGlite (one query at a time), so numbers are a floor, not production capacity |
 

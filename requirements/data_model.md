@@ -29,7 +29,8 @@ AuditLog   (standalone, append-only)
 |---|---|---|
 | `id` | text (cuid) | PK |
 | `email` | text | unique, stored lowercase |
-| `passwordHash` | text? | bcrypt, cost 12. **Null** for a guest account created by the assistant; sign-up with that email sets it (claims the account) |
+| `passwordHash` | text? | bcrypt, cost 12. **Null** for a guest account created by the assistant (sign-up with that email sets it, claiming the account) and for the assistant's own `AGENT` account |
+| `apiKeyHash` | text? unique | SHA-256 (hex) of `AGENT_API_KEY`, set by the seed on the `AGENT` account only; the key itself is never stored |
 | `name` | text | 1–100 chars |
 | `phone` | text? | optional |
 | `allergies` | text[] | lowercase tags, max 20 (e.g. `gluten`, `shellfish`) |

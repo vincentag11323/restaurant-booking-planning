@@ -5,7 +5,7 @@ The app stores guest personal data (name, email, phone number, allergy informati
 
 ## 1. Authentication & Authorization
 
-> **APPROVED 2026-11-03, NOT YET IMPLEMENTED (next session): simpler sessions.**
+> **APPROVED and IMPLEMENTED 2026-11-03: simpler sessions.**
 > * Guests and admins: **one HttpOnly session cookie, fixed 1 hour from sign-in** (not extended by activity), then signed out. `SameSite=Lax`, `Secure` in production. No access token in memory, no refresh token, no `/api/auth/refresh`, no `ACCESS_TOKEN_TTL`.
 > * PWA: **no idle timer.** When the session ends, screens keep the data they already show; the next server call returns 401 and the app goes to sign-in.
 > * AI assistant: a **predefined API key** (`AGENT_API_KEY`) created at seeding; only its hash is stored. Sent as `X-Agent-Key`; maps to role `AGENT` with the same two permissions. No agent password.
@@ -14,7 +14,8 @@ The app stores guest personal data (name, email, phone number, allergy informati
 * **Role-Based Access Control (RBAC):** Three roles, `USER`, `ADMIN` and `AGENT` (the AI booking assistant, planned in `agent_spec.md` §5.5). Routes check permissions; `AGENT` may only book on a guest's behalf and look up one guest by exact email.
   * Guests can only see and change **their own** reservations and profile. Requesting another guest's reservation returns `404 Not Found`, so record IDs cannot be probed.
   * Admins have **read-only** access to all reservations, stats and exports. There is no admin endpoint that creates, edits or deletes bookings.
-* **Token Management:** **JWT** access tokens with a short expiry (**15 minutes**), plus a **Refresh Token** (7 days) stored in an `HttpOnly`, `SameSite=Lax`, `Secure` (in production) cookie.
+* **Session Management:** the `session` cookie holds a signed JWT (`SESSION_SECRET`) with the user id and role, expiring 1 hour after sign-in. Logout clears the cookie; there is no server-side revocation list, so a copied cookie stays valid until it expires. The agent key is checked against the stored SHA-256 on each call.
+* **CSRF:** `SameSite=Lax` keeps the cookie off cross-site POSTs; non-GET requests with a foreign `Origin` header get `403`. The web app and the API must be on the same site (e.g. `app.example.com` + `api.example.com`).
 * **Brute-force protection:** Rate limiting on `/api/auth/*` (20 requests / 15 minutes / IP).
 * **MFA:** *Future enhancement* for Admin logins. Not in v1, to keep scope small.
 

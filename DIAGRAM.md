@@ -14,7 +14,7 @@ flowchart LR
     aa["src/agent-api"]
   end
 
-  ba -->|"/api/* JSON + Bearer JWT<br/>refresh cookie on /api/auth"| api
+  ba -->|"/api/* JSON<br/>HttpOnly session cookie (1 h)"| api
   aa -->|"/agent/chat → POST /chat<br/>email in body, no login"| agent
 
   subgraph agent["resortos-booking-agent (:4300)"]
@@ -22,7 +22,7 @@ flowchart LR
     llm["src/llm/cent_ai_api.ts"]
   end
   mastra --> llm -->|"Anthropic Messages format<br/>(x-api-key)"| cent[("Cent AI<br/>deepseek-v4.1-flash")]
-  agent -->|"signs in as role AGENT<br/>POST /api/agent/*"| api
+  agent -->|"X-Agent-Key (role AGENT)<br/>POST /api/agent/*"| api
 
   subgraph api["resortos-booking-api (:4000)"]
     express["Express 5 + Zod + RBAC"]
@@ -52,10 +52,10 @@ sequenceDiagram
   participant A as Booking API
   participant D as Database
   G->>A: POST /api/auth/register or /login
-  A-->>G: access token (15 min, in memory) + refresh cookie (7 days)
+  A-->>G: HttpOnly session cookie (fixed 1 hour)
   G->>A: GET /api/availability?branch&sector&date (public)
   A-->>G: free tables/rooms per sitting
-  G->>A: POST /api/reservations (Bearer)
+  G->>A: POST /api/reservations (cookie)
   A->>D: one transaction: pick lowest free tables, insert locks
   Note over D: UNIQUE(tableId, slotStart) makes double-booking impossible
   A-->>G: 201 CONFIRMED + code RSV-XXXXXX
@@ -88,26 +88,24 @@ sequenceDiagram
 
 ## 4. Sessions and tokens
 
-> **APPROVED 2026-11-03, NOT YET IMPLEMENTED (next session); the diagram below is the current behaviour: simpler sessions.**
-> * Guests and admins: **one HttpOnly session cookie, fixed 1 hour from sign-in** (not extended by activity), then signed out. `SameSite=Lax`, `Secure` in production. No access token in memory, no refresh token, no `/api/auth/refresh`, no `ACCESS_TOKEN_TTL`.
-> * PWA: **no idle timer.** When the session ends, screens keep the data they already show; the next server call returns 401 and the app goes to sign-in.
-> * AI assistant: a **predefined API key** (`AGENT_API_KEY`) created at seeding; only its hash is stored. Sent as `X-Agent-Key`; maps to role `AGENT` with the same two permissions. No agent password.
-> * Keep CSRF safe with `SameSite=Lax` + the CORS origin rule, and add a test for it. Update api_spec.md, DIAGRAM.md, READMEs and every test helper that sends `Authorization: Bearer`.
-
+Approved and implemented 2026-11-03. Guests and admins get **one HttpOnly cookie, fixed 1 hour from sign-in** (activity doesn't extend it). The assistant sends a seeded API key instead (`X-Agent-Key`, only its SHA-256 stored).
 
 ```mermaid
 sequenceDiagram
   participant B as Browser
   participant A as Booking API
-  B->>A: page load: POST /api/auth/refresh (cookie)
-  alt valid cookie
-    A-->>B: new access token + rotated refresh cookie
+  B->>A: POST /api/auth/login
+  A-->>B: { user } + Set-Cookie session (HttpOnly, SameSite=Lax, 1 h)
+  B->>A: page load: GET /api/me (cookie)
+  alt cookie valid
+    A-->>B: user
   else no or expired cookie
     A-->>B: 401 (logged in errors.log by owner decision)
   end
-  B->>A: request with expired access token
+  Note over B: after 1 hour: screens keep their data, no idle timer
+  B->>A: next call (expired cookie)
   A-->>B: 401
-  B->>A: one shared refresh, then retry once
+  Note over B: app goes to sign-in
 ```
 
 ## 5. Choices and peculiarities (on purpose, for simplicity)
@@ -135,7 +133,7 @@ sequenceDiagram
 * Cent AI via the **Anthropic Messages** format (about 3× fewer input tokens than Responses). DeepSeek's unsigned "thinking" blocks are dropped before the AI SDK sees them. Each turn has a **25 s** limit.
 
 **Platform**
-* Sessions: 15-minute access token in memory, 7-day refresh cookie (HttpOnly, rotated). No server-side revocation list yet.
+* Sessions: one HttpOnly cookie, fixed 1 hour from sign-in, no refresh, no idle timer. No server-side revocation list. The assistant uses a seeded API key (`X-Agent-Key`), not a session.
 * **PWA:** installable, works offline for the app shell only; booking data is always live.
 * Mobile-only layout; English only; prices shown as `Rp 320.000` on every browser.
 * **Failure log:** every 4xx/5xx is one JSON line in `logs/errors.log` (no bodies, passwords or query strings), rotated at 5 MB, 3 old files kept.

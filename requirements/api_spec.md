@@ -3,7 +3,8 @@
 
 Base URL: `/api`. JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
 
-**Auth:** `Authorization: Bearer <accessToken>` (15 min). Refresh token is an `HttpOnly` cookie scoped to `/api/auth`.  
+**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production), valid **1 hour from sign-in** and never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>` (only its SHA-256 is stored). `Authorization: Bearer` is not accepted.  
+**CSRF:** `SameSite=Lax` plus an origin rule: a non-GET request whose `Origin` header isn't `CORS_ORIGIN` gets `403 Cross-origin request blocked`.  
 **Errors:** always `{ "message": string }`, using 400 / 401 / 403 / 404 (see `PRD_BOOKING_v1.md` §4.2).
 
 Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN · 🤖 AGENT (the AI booking assistant's service account)
@@ -13,12 +14,11 @@ Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ 
 ## 1. Auth
 | Method | Path | Access | Body | Success | Errors |
 |---|---|---|---|---|---|
-| POST | `/auth/register` | 🌐 | `{ email, password (8–72), name, phone? }` | `201 { accessToken, user }` + cookie | `400` validation / `Email is already registered` |
-| POST | `/auth/login` | 🌐 | `{ email, password }` | `200 { accessToken, user }` + cookie | `400` validation, `401 Invalid email or password` |
-| POST | `/auth/refresh` | 🌐 (cookie) | — | `200 { accessToken, user }` + rotated cookie | `401` |
+| POST | `/auth/register` | 🌐 | `{ email, password (8–72), name, phone? }` | `201 { user }` + `session` cookie | `400` validation / `Email is already registered` |
+| POST | `/auth/login` | 🌐 | `{ email, password }` | `200 { user }` + `session` cookie | `400` validation, `401 Invalid email or password` |
 | POST | `/auth/logout` | 🌐 | — | `200 { message }`, cookie cleared | — |
 
-`user` = `{ id, email, name, phone, allergies, role }`. Rate limit: 20 req / 15 min / IP on `/auth/*`; over the limit → `429 { message: "Too many attempts. Please wait a few minutes and try again." }`.
+`user` = `{ id, email, name, phone, allergies, role }`. There is no refresh: after 1 hour every call returns `401` and the guest signs in again. The app checks for a session on page load with `GET /me`. Rate limit: 20 req / 15 min / IP on `/auth/*`; over the limit → `429 { message: "Too many attempts. Please wait a few minutes and try again." }`.
 
 ## 2. Profile
 | Method | Path | Access | Body | Success |
@@ -122,7 +122,7 @@ Every failed request (any `4xx` or `5xx` response, including unknown routes and 
 * written as one JSON line to **`logs/errors.log`** (`ERROR_LOG_PATH`): `{ time, status, method, path, message, userId?, ip }`. No request bodies, passwords, tokens or guest messages. `5xx` lines also carry the error name and stack;
 * printed with `console.error`.
 
-**Owner decision (2026-11-03):** the 401 from the session check on page load (`POST /auth/refresh` with a missing or expired refresh cookie) stays logged: there is no valid session, so it counts as a failure.
+**Owner decision (2026-11-03):** the 401 from the session check on page load (`GET /me` with a missing or expired session cookie) stays logged: there is no valid session, so it counts as a failure.
 
 **Rotation:** before writing, if the file is over **5 MB** (`ERROR_LOG_MAX_BYTES`), it's renamed `errors.log.1` (older copies shift to `.2`, `.3`; the 4th is deleted), so at most **3** old files are kept. Tests point `ERROR_LOG_PATH` at a temp file and can silence the console (`ERROR_LOG_CONSOLE=false`).
 
