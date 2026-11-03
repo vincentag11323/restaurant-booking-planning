@@ -128,3 +128,15 @@ Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results with 
 | Admin | D1 D2 D3 D4 D6 D7 | all passed (D4 failed once on a test selector, fixed) |
 | Security / logging | S1 S2 S4 S9 | all passed |
 | PWA | W1 W3 W4 | all passed |
+
+### Run on 2026-11-03 (latest e2e: 66 passed, 0 failed)
+| To-be-tested item | Result |
+|---|---|
+| T2 races on **real PostgreSQL 17** | ✅ `npm run test:pg`: 61 Playwright + 77 Jest passed. **Found and fixed a bug:** simultaneous confirmations for a new email raced into 500s (guest-account upsert); now `INSERT … ON CONFLICT DO NOTHING` |
+| T3 Safari/WebKit and Firefox | ✅ 10 scenarios each passed. **Found and fixed:** Safari formatted prices as `Rp320.000` (now `Rp 320.000` everywhere) |
+| T4 accessibility (axe, WCAG 2 A/AA, 7 screens) | ✅ no violations at all (screen-reader pass still manual) |
+| T5 visual regression | ✅ baselines recorded for sign-in, register, chat |
+| T6 load (autocannon, test API on PGlite) | ✅ 0 errors / 0 non-2xx. Availability ~1,000 req/s (p99 61 ms, 50 connections); menu ~8,000 req/s; **sign-in ~10 req/s, p50 ~0.9 s** (bcrypt cost 12 is CPU-bound) |
+| T7 real token expiry (8 s tokens) | ✅ refresh + retry worked after expiry |
+| Still needs staging or people | T1 real phones, T8 HTTPS deploy, T9 CSV in Excel, T10 ZAP scan, T11 UAT |
+

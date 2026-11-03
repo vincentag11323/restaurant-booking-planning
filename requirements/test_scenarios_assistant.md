@@ -118,3 +118,7 @@ Suite: `resortos-booking-e2e` ([e2e_spec.md](e2e_spec.md)). Latest results and t
 | X2 edited confirmation, X9 input bounds (no AI) | passed | passed |
 
 At the time of run 2, a direct Cent AI ping took 31 s for a one-word reply and reported 2,036 input tokens for a six-word prompt.
+
+### Run 3 (2026-11-03, latest): Cent AI fast again
+All 12 assistant scenarios **passed** with the real model (C1, C5, C7, T3, F1, F2, F14, O1, T7, X10, X2, X9), plus the chat screen in the app (**CUI**: Ask tab → read-back → Book it → code). F6 and T12 (concurrent confirmations) pass on real PostgreSQL. Still to test with the model: T4 two-step turn, T8 non-English message, T9 long conversation, T10 Responses format fallback, T11 budget exhausted, T13 rate limits behind a real proxy, T14 latency and cost study.
+
