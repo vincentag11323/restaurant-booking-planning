@@ -16,7 +16,7 @@ Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ 
 | POST | `/auth/refresh` | 🌐 (cookie) | — | `200 { accessToken, user }` + rotated cookie | `401` |
 | POST | `/auth/logout` | 🌐 | — | `200 { message }`, cookie cleared | — |
 
-`user` = `{ id, email, name, phone, allergies, role }`. Rate limit: 20 req / 15 min / IP on `/auth/*`.
+`user` = `{ id, email, name, phone, allergies, role }`. Rate limit: 20 req / 15 min / IP on `/auth/*`; over the limit → `429 { message: "Too many attempts. Please wait a few minutes and try again." }`.
 
 ## 2. Profile
 | Method | Path | Access | Body | Success |
