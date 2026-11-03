@@ -167,7 +167,31 @@ resortos-booking-agent/
 | D4 | Where guests chat | Agent repo is an HTTP service only. A small chat screen is added to `resortos-booking-web` as a separate, later task. Mastra's dev studio is used for testing until then |
 | D5 | Framework | **Mastra** (§6) |
 | D6 | Test runner for this repo | **Vitest** (native ESM + TypeScript, which suits ESM-only Mastra without extra transforms). Alternative: Jest + `@swc/jest` like the API, if you prefer one tool everywhere |
-| D7 | LLM endpoint | Owner supplies an OpenAI-compatible URL + model + key later. Nothing is hard-coded |
+| D7 | LLM endpoint | **Cent AI** (cent-ai.dev, owner's provider). See §11. Owner supplies the key and model ID; nothing is hard-coded |
 
 ## 10. Out of Scope (assistant v1)
 Viewing, changing or cancelling bookings · menu Q&A · payments · languages other than English · voice · saved chat history · real email/WhatsApp delivery · staff-facing assistant.
+
+## 11. LLM Provider: Cent AI
+Checked 2026-11-03 against cent-ai.dev, cent-ai.dev/docs and the live API.
+
+| Item | Value |
+|---|---|
+| What it is | Prepaid API gateway to multiple models, OpenAI- and Anthropic-compatible |
+| OpenAI-compatible base URL | `https://api.cent-ai.dev/v1` (`POST /chat/completions`, `/models`, `/responses`) |
+| Anthropic-compatible base URL | `https://api.cent-ai.dev` (`POST /v1/messages`) |
+| Auth | `Authorization: Bearer <key>` (docs curl example); keys look like `cai_…`. Unauthenticated calls return `401 {"error":{"code":"invalid_api_key",...,"type":"authentication_error"}}` (OpenAI-style error body) |
+| Models | Depends on the pack (7, 20 or 26 models). Example IDs in the docs: `glm-5.3`, `claude-opus-5`. Full list via `GET /v1/models` with a key |
+| Cost | Per token (input, cache read, cache write, output); each response carries `usage.cost` in USD |
+| Not documented publicly | Tool/function calling, structured (JSON schema) output, streaming, rate limits |
+
+**How the agent uses it:** Mastra → AI SDK `@ai-sdk/openai-compatible` provider with `baseURL = LLM_BASE_URL` (`https://api.cent-ai.dev/v1`), `apiKey = LLM_API_KEY`, model `LLM_MODEL`. The key lives only in `.env` (git-ignored). If the OpenAI route mishandles tool calls for Claude models, switch to `@ai-sdk/anthropic` with `baseURL = https://api.cent-ai.dev`, a config-only change.
+
+**Must verify before building** (one smoke script, a few cents of usage, once the key is provided):
+1. `GET /v1/models` lists the chosen model.
+2. A chat completion with one tool definition returns a proper `tool_calls` response. This is critical: the assistant can't work without tool calling.
+3. Structured output for the topic guard (`response_format` JSON schema). If unsupported, the guard asks for plain JSON and Zod validates it.
+4. Error shape and latency for a normal request.
+
+**Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design already keeps guest email/phone out of prompts (§5.5). Billing is prepaid with no auto-renewal, so a drained balance makes the assistant fail. The agent maps that to a 502 "Assistant unavailable" and logs `usage.cost` per request so spend is visible.
+
