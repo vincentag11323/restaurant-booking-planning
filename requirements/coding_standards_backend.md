@@ -41,8 +41,9 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 * Never log bodies, passwords, tokens, keys, names, emails, phone numbers or allergies.
 
 ## 6. Naming and style
-* Files `snake_case.ts` in the api's `src/lib` and the agent; one clear name per file (`tokens.ts`, `permissions.ts`).
-* Functions and variables `camelCase`, types and classes `PascalCase`, constants `UPPER_SNAKE_CASE`.
+* **camelCase everywhere (owner rule, 2026-11-04), never snake_case or kebab-case:** file names (`errorLog.ts`, `bookingApi.ts`, `routeRules.test.ts`), folders inside a repo, functions, variables, **constants** (`maxPartySize`, `slotStartTimes`), object keys, JSON fields, query parameters, database columns. Types, classes and React components are PascalCase.
+* **The only UPPER_SNAKE_CASE allowed** is data that leaves the code, where renaming would break stored rows or the API contract: environment variable names (`DATABASE_URL`), database enum values sent over the API (`MAIN_HALL`, `BRANCH_1`, `NO_SHOW`), and audit / log action names (`CREATE_RESERVATION`, `USER_CREATED`). Repo names (`resortos-booking-api`) and npm script names stay as they are.
+* One clear name per file (`tokens.ts`, `permissions.ts`).
 * Small functions with one job. Prefer early returns over deep nesting.
 * Comments say **why**, not what. No commented-out code.
 * KISS: no new dependency, abstraction or option unless the spec needs it.

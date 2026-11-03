@@ -40,8 +40,9 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 * The axe check in the e2e suite must stay at zero violations.
 
 ## 6. Naming and style
-* Components `PascalCase.tsx`, other files `camelCase.ts` or as the folder already uses.
-* Functions and variables `camelCase`, types `PascalCase`, constants `UPPER_SNAKE_CASE`.
+* **camelCase everywhere (owner rule, 2026-11-04), never snake_case or kebab-case:** file names (`errorLog.ts`, `bookingApi.ts`, `sessionAndStates.spec.ts`), folders inside a repo, functions, variables, **constants** (`maxPartySize`, `slotStartTimes`), object keys, JSON fields, query parameters, database columns. Types, classes and React components are PascalCase.
+* **The only UPPER_SNAKE_CASE allowed** is data that leaves the code, where renaming would break stored rows or the API contract: environment variable names (`DATABASE_URL`), database enum values sent over the API (`MAIN_HALL`, `BRANCH_1`, `NO_SHOW`), and audit / log action names (`CREATE_RESERVATION`, `USER_CREATED`). Repo names (`resortos-booking-api`) and npm script names stay as they are.
+* Component files are `PascalCase.tsx` (`MyBookingsPage.tsx`); every other file is `camelCase.ts`.
 * Comments say **why**, not what. No commented-out code. KISS: no new library unless the spec needs it.
 
 ## 7. Testing
