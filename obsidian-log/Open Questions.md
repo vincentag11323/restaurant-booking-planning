@@ -91,9 +91,9 @@ Docs live in root repo, shared reference for backend and frontend.
 
 **Question:** When a user's session expires or is revoked, should the app show a dismissible "Your session ended" message before redirecting to sign-in?
 
-**Context:** Spec doesn't require this. Current behavior: next API call hits 401, user is silently redirected. Acceptable but not explicit.
+**Context:** Spec doesn't require this. Current behavior: next API call hits 401, user is silently redirected.
 
-**Decision:** Pending owner input.
+**Decision (owner, 2026-11-04):** No. The 401 already sends them to sign in; keep it simple.
 
 **Date:** 2026-11-04  
 **Session:** [[Session Log/2026-11-04]]
@@ -108,7 +108,7 @@ Docs live in root repo, shared reference for backend and frontend.
 
 **Note:** Would require session storage (Redis, database), adding complexity and state.
 
-**Decision:** Pending owner input.
+**Decision (owner, 2026-11-04):** Critical; must be fixed. Plan first, explained to the owner before any code.
 
 **Date:** 2026-11-04  
 **Session:** [[Session Log/2026-11-04]]
@@ -149,7 +149,7 @@ Docs live in root repo, shared reference for backend and frontend.
 
 **Context:** `.env.example` already describes `SESSION_SECRET` and `AGENT_API_KEY`. Test runs set their own values, but `npm run dev` in the api fails until `SESSION_SECRET` (≥ 32 characters) is added to the local `.env`.
 
-**Decision:** Pending owner input.
+**Decision (owner, 2026-11-04):** Done. api and agent `.env` now have a random `SESSION_SECRET` and a shared random `AGENT_API_KEY`; old `JWT_*`, `AGENT_EMAIL`, `AGENT_PASSWORD` removed; local DB migrated and seeded.
 
 **Date:** 2026-11-04  
 **Session:** [[Session Log/2026-11-04]]
