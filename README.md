@@ -12,6 +12,7 @@ Table booking for two resort restaurants: a mobile PWA for guests and admins, a 
 | `resortos-booking-agent/` | AI booking assistant (Mastra + Cent AI) | [README](resortos-booking-agent/README.md) |
 | `resortos-booking-e2e/` | Real end-to-end tests, videos, results, load test | [README](resortos-booking-e2e/README.md) |
 | `obsidian-log/` | Working log, decisions, learnings (open as an Obsidian vault) | [README](obsidian-log/README.md) |
+| `RULES.md` | How every task is run: Plan → Build → Review → Test subagents, evidence only | |
 | `AGENTS_TO_BE_USED.md` | How the AI coding agents and skills are used | |
 
 Each `resortos-*` folder is its own git repository; this root folder is the planning repository.

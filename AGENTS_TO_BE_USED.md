@@ -1,7 +1,7 @@
 # Agents & Skills To Be Used
 **ResortOS AI — Restaurant Booking App**
 
-Which agent skills are used, **when**, and **what they may not do**. Applies to both repos (`resortos-booking-api`, `resortos-booking-web`).
+Which agent skills are used, **when**, and **what they may not do**. **How each task is run (Plan → Build → Review → Test subagents): `RULES.md`, read before every task.** Applies to both repos (`resortos-booking-api`, `resortos-booking-web`).
 
 ## 1. Install Status (updated 2026-11-03)
 

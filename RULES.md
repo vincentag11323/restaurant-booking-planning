@@ -1,0 +1,39 @@
+# Rules: how every task is run
+
+The main agent (orchestrator) reads this file **before starting each task** and before launching each stage.
+Owner rule, 2026-11-03. Details on skills and reviewers: `AGENTS_TO_BE_USED.md`.
+
+## 1. Four stages, one after another
+
+Every feature or change goes through four subagents **in order**. A stage starts only after the orchestrator has checked the previous stage's report (§3).
+
+| # | Stage | Agent / model | Does | Must not |
+|---|---|---|---|---|
+| 1 | **Plan** | `ecc:planner`, Opus | Reads the approved spec and the real code; returns a file-by-file plan: every file to change, every test to add or change (with the exact status code and message from the spec), the order of the work and the commit messages | Write or edit any file |
+| 2 | **Build** | `general-purpose`, Opus | Follows the plan test-first (red, then green), one repo at a time; runs that repo's test suites; small commits | Touch files not in the plan, weaken or delete tests, lower coverage |
+| 3 | **Review** | Reviewers from `AGENTS_TO_BE_USED.md` §5 that apply, run side by side: `ecc:security-reviewer` (Opus) for auth or personal data, `ecc:database-reviewer` (Sonnet) for schema or queries, `ecc:typescript-reviewer` (Sonnet), `ecc:react-reviewer` (Sonnet) for `.tsx`, plus a Spec check against `requirements/` (`mattpocock-skills:code-review` Standards + Spec) | Report findings with `file:line` and the spec section each one breaks | Edit files. Fixes go back to stage 2 (Build), then are reviewed again |
+| 4 | **Test** | `general-purpose`, Sonnet | Runs every suite (API Jest + Playwright, web, agent, the full e2e stack), then probes security (auth bypass, CSRF, expired or forged sessions, key leaks, injection), vulnerabilities (`npm audit`) and usability (what the user sees when a session ends, error messages). Adds a test only where a spec rule has none | Fix app code (failures go back to stage 2) |
+
+The Haiku Obsidian logger runs after stage 4 (see `AGENTS_TO_BE_USED.md` §4). The orchestrator commits.
+
+## 2. No hallucination, necessary files only
+
+* Every claim in a report needs evidence: a command and its real output, or `file:line`. "Should work" is not evidence.
+* Test results are reported as the exact command plus the pass/fail/skip counts it printed. Expected vs actual, never rounded up.
+* **Create a file only if the plan names it** and the spec needs it. No new docs, notes, summaries, helper scripts or "examples" beyond the plan. Prefer editing existing files.
+* Don't invent APIs, env vars, options or library behaviour: read the code or `node_modules` first. If unsure, say so in the report.
+* Stay inside the task's scope; anything extra found goes in the report as a suggestion, not into the code.
+* Never run destructive git (`reset --hard`, `push`, force anything). Commits are local.
+
+## 3. The orchestrator checks each report before the next stage
+
+1. Re-read this file.
+2. `git status` and `git diff --stat` in every repo the stage touched: only planned files changed? Any unexpected new file gets removed or justified.
+3. Re-run at least one test command the stage claims passed, and compare the counts.
+4. Confirm each review finding against the code before sending it to Build.
+5. Then launch the next stage, passing it the previous stage's verified output.
+
+## 4. Always true (from `AGENTS_TO_BE_USED.md` §6)
+* No code before the spec is approved by the owner. KISS. TypeScript only.
+* Backend Jest keeps `src/` at 100% coverage; no coverage-ignore comments.
+* Original owner docs (`PRD_BOOKING.md`, Bahasa files) are never edited.
