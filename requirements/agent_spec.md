@@ -179,7 +179,7 @@ Checked 2026-11-03 against cent-ai.dev/docs (`api/responses`, `api/messages`, `a
 | | **Messages** (Anthropic format) | **Responses** (OpenAI format) |
 |---|---|---|
 | Endpoint | `POST https://api.cent-ai.dev/v1/messages` | `POST https://api.cent-ai.dev/v1/responses` |
-| SDK base URL | `https://api.cent-ai.dev` | `https://api.cent-ai.dev/v1` |
+| SDK base URL | Official Anthropic SDK: `https://api.cent-ai.dev`. **AI SDK (ours): `https://api.cent-ai.dev/v1`** (`@ai-sdk/anthropic` appends `/messages`) | `https://api.cent-ai.dev/v1` |
 | Auth header | `x-api-key: cai_…` + `anthropic-version: 2023-06-01` | `Authorization: Bearer cai_…` |
 | Body | `model`, `messages`, **`max_tokens` (required)**, `system`, `tools`, `thinking`, `stream`, `cache_control` | `model`, `input`, `instructions`, `tools`, `reasoning`, `stream`, `store`, `previous_response_id` (extra params "sent to the model as is") |
 | Tool calls come back as | `content` blocks of type `tool_use`, `stop_reason: "tool_use"` | `output` items of type `function_call` |
