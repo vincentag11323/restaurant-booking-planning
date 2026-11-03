@@ -26,7 +26,7 @@ Any route the role can't access redirects (USER → `/`, ADMIN → `/admin`, gue
   * Pages import from these folders only; no page calls `fetch` directly.
 * **Naming:** folders lowercase, kebab-case when multi-word; React components PascalCase; other files camelCase.
 * Fetch wrapper: sends the HttpOnly session cookie (`credentials: "include"`). On a `401` outside `/api/auth/*` it signs the guest out locally and goes to sign-in. No refresh, no retry, no idle timer.
-* On page load the session context calls `GET /api/user/me`; a `401` means signed out. Screens keep the data they already show until the next server call.
+* On page load the session context calls `GET /api/users/me`; a `401` means signed out. Screens keep the data they already show until the next server call.
 * No global state library. Use React context for auth and local component state for everything else.
 * Dev: Vite proxies `/api` to `http://localhost:4000` and `/agent` to `http://localhost:4300` (both same-origin). Prod: `VITE_API_URL`, `VITE_AGENT_URL`.
 

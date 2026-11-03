@@ -1,7 +1,7 @@
 # API Specification
 **ResortOS AI — Restaurant Booking App**
 
-Base URL: `/api`. Paths in the tables below are relative to it (e.g. `/public/menu` is `/api/public/menu`). JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
+Base URL: `/api`. Paths in the tables below are relative to it (e.g. `/public/menus` is `/api/public/menus`). JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
 
 **Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production). Its value is a long random token; the server stores only its SHA-256, in the `Session` table (`data_model.md`). A session lasts **1 hour from sign-in** and is never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>`, checked against the `ApiKey` table (SHA-256 only, `data_model.md`). `Authorization: Bearer` is not accepted.  
 **When a session ends:** (1) **sign-out** deletes its `Session` row, so that cookie, and any copy of it, is refused from the next request on; (2) **time**: once `expiresAt` (sign-in + 1 hour) has passed the row no longer counts, so the session ends by itself with no job or timer. Removing a user removes their sessions and API key (cascade). An ended session gets `401 Invalid or expired token` on every route that needs sign-in.  
@@ -17,13 +17,13 @@ Every path starts with one group, and each group has its own middleware. The app
 |---|---|---|---|
 | `/api/public/*` (§3 availability, §4 menu, §7 health) | anyone, including the assistant | **none** | No cookie or key is read. |
 | `/api/auth/*` (§1) | anyone | rate limit only | Sign-up, sign-in, sign-out. Sign-out reads its own cookie to delete that session. |
-| `/api/user/*` (§2 profile, §3 reservations, §4 recommendations) | signed-in guests and admins | **sign-in check** | Reads only the `session` cookie. No cookie → `401 Authentication required`. No matching `Session` row, or `expiresAt` passed → `401 Invalid or expired token`. Otherwise sets `req.auth = { userId, role, sessionId }` (role read from the user row, so a role change applies at once). |
-| `/api/admin/*` (§5) | admins | sign-in check, then admin check | Same sign-in check; a role other than `ADMIN` → `403 Forbidden`. |
-| `/api/agent/*` (§6) | the AI assistant | **agent key check** | Reads only `X-Agent-Key`. Missing or empty → `401 Authentication required`. No matching `ApiKey` row, or its owner isn't `AGENT` → `401 Invalid API key`. Otherwise sets `req.auth = { userId, role: "AGENT" }`. |
+| `/api/users/*` (§2 profile, §3 reservations, §4 recommendations) | signed-in guests and admins | **sign-in check** | Reads only the `session` cookie. No cookie → `401 Authentication required`. No matching `Session` row, or `expiresAt` passed → `401 Invalid or expired token`. Otherwise sets `req.auth = { userId, role, sessionId }` (role read from the user row, so a role change applies at once). |
+| `/api/admins/*` (§5) | admins | sign-in check, then admin check | Same sign-in check; a role other than `ADMIN` → `403 Forbidden`. |
+| `/api/agents/*` (§6) | the AI assistant | **agent key check** | Reads only `X-Agent-Key`. Missing or empty → `401 Authentication required`. No matching `ApiKey` row, or its owner isn't `AGENT` → `401 Invalid API key`. Otherwise sets `req.auth = { userId, role: "AGENT" }`. |
 
-So a guest's cookie means nothing on `/api/agent/*`, and the assistant's key means nothing on `/api/user/*` or `/api/admin/*` (both get `401 Authentication required`). Routes take the caller's id and role **only** from `req.auth`, never from the body or query.
+So a guest's cookie means nothing on `/api/agents/*`, and the assistant's key means nothing on `/api/users/*` or `/api/admins/*` (both get `401 Authentication required`). Routes take the caller's id and role **only** from `req.auth`, never from the body or query.
 
-**RBAC:** two layers: the group middleware above, then a permission check per route (`src/lib/permissions.ts`), e.g. an admin on `/api/user/reservations` gets `403 Forbidden`. Admins can't create bookings.
+**RBAC:** two layers: the group middleware above, then a permission check per route (`src/lib/permissions.ts`), e.g. an admin on `/api/users/reservations` gets `403 Forbidden`. Admins can't create bookings.
 
 ## 1. Auth
 | Method | Path | Access | Body | Success | Errors |
@@ -32,23 +32,23 @@ So a guest's cookie means nothing on `/api/agent/*`, and the assistant's key mea
 | POST | `/auth/login` | 🌐 | `{ email, password }` | `200 { user }` + `session` cookie (a new `Session` row; that user's expired rows are deleted) | `400` validation, `401 Invalid email or password` |
 | POST | `/auth/logout` | 🌐 | — | `200 { message }`: deletes this cookie's `Session` row (if any) and clears the cookie. Sessions on other devices stay. | — |
 
-`user` = `{ id, email, name, phone, allergies, role }`. There is no refresh: after 1 hour every call returns `401` and the guest signs in again. The app checks for a session on page load with `GET /user/me`. Rate limit: 20 req / 15 min / IP on `/auth/*`; over the limit → `429 { message: "Too many attempts. Please wait a few minutes and try again." }`.
+`user` = `{ id, email, name, phone, allergies, role }`. There is no refresh: after 1 hour every call returns `401` and the guest signs in again. The app checks for a session on page load with `GET /users/me`. Rate limit: 20 req / 15 min / IP on `/auth/*`; over the limit → `429 { message: "Too many attempts. Please wait a few minutes and try again." }`.
 
 ## 2. Profile
 | Method | Path | Access | Body | Success |
 |---|---|---|---|---|
-| GET | `/user/me` | 👤 any | — | `200 user` |
-| PATCH | `/user/me` | 👤 any | `{ name?, phone? \| null, allergies?: string[] }` | `200 user` |
+| GET | `/users/me` | 👤 any | — | `200 user` |
+| PATCH | `/users/me` | 👤 any | `{ name?, phone? \| null, allergies?: string[] }` | `200 user` |
 
 ## 3. Availability & Reservations
 | Method | Path | Access | Input | Success | Errors |
 |---|---|---|---|---|---|
-| GET | `/public/availability` | 🌐 | `?branch&sector&date` | `200 Slot[]` | `400` |
-| GET | `/user/reservations` | 👤 | — | `200 Reservation[]` (own, newest slot first) | `401` |
-| GET | `/user/reservations/:id` | 👤 | — | `200 Reservation` | `404` (missing or not owned) |
-| POST | `/user/reservations` | 👤 | `{ branch, sector, date, startTime, partySize, specialRequests? }` | `201 Reservation` | `400` (see below) |
-| PATCH | `/user/reservations/:id` | 👤 | `{ date, startTime, partySize? }` | `200 Reservation` | `400`, `404` |
-| DELETE | `/user/reservations/:id` | 👤 | — | `200 Reservation` (status `CANCELLED`) | `400`, `404` |
+| GET | `/public/availabilities` | 🌐 | `?branch&sector&date` | `200 Slot[]` | `400` |
+| GET | `/users/reservations` | 👤 | — | `200 Reservation[]` (own, newest slot first) | `401` |
+| GET | `/users/reservations/:id` | 👤 | — | `200 Reservation` | `404` (missing or not owned) |
+| POST | `/users/reservations` | 👤 | `{ branch, sector, date, startTime, partySize, specialRequests? }` | `201 Reservation` | `400` (see below) |
+| PATCH | `/users/reservations/:id` | 👤 | `{ date, startTime, partySize? }` | `200 Reservation` | `400`, `404` |
+| DELETE | `/users/reservations/:id` | 👤 | — | `200 Reservation` (status `CANCELLED`) | `400`, `404` |
 
 ```ts
 type Slot = {
@@ -81,8 +81,8 @@ type Reservation = {
 ## 4. Menu
 | Method | Path | Access | Input | Success |
 |---|---|---|---|---|
-| GET | `/public/menu` | 🌐 | `?type=SEASONAL_FINE_DINING\|A_LA_CARTE` | `200 MenuItem[]` |
-| GET | `/user/menu/recommendations` | 👤 USER (admins get `403 Forbidden`) | — | `200 MenuItem[]` (allergen-free for this user, chef's picks first) |
+| GET | `/public/menus` | 🌐 | `?type=SEASONAL_FINE_DINING\|A_LA_CARTE` | `200 MenuItem[]` |
+| GET | `/users/menus/recommendations` | 👤 USER (admins get `403 Forbidden`) | — | `200 MenuItem[]` (allergen-free for this user, chef's picks first) |
 
 `MenuItem = { id, name, description, type, priceCents, allergens: string[], chefPick }`
 
@@ -91,10 +91,10 @@ All require 🛡️ ADMIN. A `USER` token gets `403`. There are **no** POST/PATC
 
 | Method | Path | Input | Success |
 |---|---|---|---|
-| GET | `/admin/stats` | `?date=YYYY-MM-DD` (default today local) `&branch?` | `200 Stats` |
-| GET | `/admin/reservations` | filters + `?page=1&pageSize=20` (max 100) | `200 { items: AdminReservation[], total, page, pageSize }` |
-| GET | `/admin/reservations/export` | filters + `?format=csv\|json` | `200` file download (`Content-Disposition: attachment`) |
-| GET | `/admin/reservations/:id` | — | `200 AdminReservation` or `404` |
+| GET | `/admins/stats` | `?date=YYYY-MM-DD` (default today local) `&branch?` | `200 Stats` |
+| GET | `/admins/reservations` | filters + `?page=1&pageSize=20` (max 100) | `200 { items: AdminReservation[], total, page, pageSize }` |
+| GET | `/admins/reservations/export` | filters + `?format=csv\|json` | `200` file download (`Content-Disposition: attachment`) |
+| GET | `/admins/reservations/:id` | — | `200 AdminReservation` or `404` |
 
 **Filters:** `branch?`, `sector?`, `status?`, `source?` (`APP` | `AGENT`), `from?` / `to?` (local dates, inclusive), `q?` (matches reservation `code` exactly, or name / email / phone case-insensitive contains).
 
@@ -112,13 +112,13 @@ type Stats = {
 };
 ```
 
-Side effects: `GET /admin/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`. Export → audit `EXPORT_RESERVATIONS` (`metadata.rows`), plus `SECURITY_ALERT` if rows > 1,000. Export is capped at 10,000 rows.
+Side effects: `GET /admins/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`. Export → audit `EXPORT_RESERVATIONS` (`metadata.rows`), plus `SECURITY_ALERT` if rows > 1,000. Export is capped at 10,000 rows.
 
 ## 6. Agent (AI booking assistant) 🤖
 | Method | Path | Input | Success | Errors |
 |---|---|---|---|---|
-| POST | `/agent/reservations` | `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp? }`, header `Idempotency-Key?` (8–200 chars) | `201 Reservation` (`source: "AGENT"`); same key again → `200` with the same booking | Same `400` messages as `POST /user/reservations`, plus `This email already has 2 upcoming assistant bookings. Sign in to manage them.`, `This email can't be booked through the assistant` (staff accounts), `Idempotency-Key was already used for another booking` |
-| POST | `/agent/guests/lookup` | `{ email }` (one exact email) | `200 { exists, upcomingAssistantBookings, assistantBookingLimit }` | `400` for anything but a single email; 60 requests/minute |
+| POST | `/agents/reservations` | `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp? }`, header `Idempotency-Key?` (8–200 chars) | `201 Reservation` (`source: "AGENT"`); same key again → `200` with the same booking | Same `400` messages as `POST /users/reservations`, plus `This email already has 2 upcoming assistant bookings. Sign in to manage them.`, `This email can't be booked through the assistant` (staff accounts), `Idempotency-Key was already used for another booking` |
+| POST | `/agents/guests/lookup` | `{ email }` (one exact email) | `200 { exists, upcomingAssistantBookings, assistantBookingLimit }` | `400` for anything but a single email; 60 requests/minute |
 
 * **Assistant booking limit per email:** an email that **hasn't signed up** (password-less guest account, or new) may hold **1** upcoming assistant booking; a signed-up guest may hold **3** (more looks like spam). Over the limit → `400 "This email already has a booking made with the assistant. To book a different time, sign up with this email in the app, cancel that booking there, then ask me again."` (not signed up) or `400 "This email already has 3 upcoming assistant bookings. Sign in to manage them."` (signed up). The check runs inside the booking transaction.
 * Booking finds or creates a **password-less guest account** for the email. `POST /auth/register` with that email **claims** it (sets the password) and keeps its bookings; a password-less account can't log in (`401 Invalid email or password`, same as a wrong password).
@@ -145,11 +145,11 @@ Every request that **creates, updates or deletes database rows** and succeeds wr
 | `POST /auth/register` | `USER_CREATED` (or `USER_CLAIMED` when sign-up claims a password-less guest account the assistant made) + `SESSION_CREATED`, one line each | user id / session id |
 | `POST /auth/login` | `SESSION_CREATED` (and `SESSIONS_EXPIRED_DELETED` with a count when old rows were removed) | session id |
 | `POST /auth/logout` (the cookie matches a `Session` row, live or expired) | `SESSION_DELETED` | session id |
-| `PATCH /user/me` | `PROFILE_UPDATED` | user id |
-| `POST /user/reservations` | `RESERVATION_CREATED` | reservation code |
-| `PATCH /user/reservations/:id` | `RESERVATION_RESCHEDULED` | reservation code |
-| `DELETE /user/reservations/:id` | `RESERVATION_CANCELLED` | reservation code |
-| `POST /agent/reservations` | `RESERVATION_CREATED` (plus `GUEST_ACCOUNT_CREATED` when the email was new) | reservation code / user id |
+| `PATCH /users/me` | `PROFILE_UPDATED` | user id |
+| `POST /users/reservations` | `RESERVATION_CREATED` | reservation code |
+| `PATCH /users/reservations/:id` | `RESERVATION_RESCHEDULED` | reservation code |
+| `DELETE /users/reservations/:id` | `RESERVATION_CANCELLED` | reservation code |
+| `POST /agents/reservations` | `RESERVATION_CREATED` (plus `GUEST_ACCOUNT_CREATED` when the email was new) | reservation code / user id |
 
 Reads (GET) and requests that change nothing (e.g. logout without a session, an idempotent agent retry) write no success line. Audit-log rows written alongside a change are not logged separately.
 
@@ -157,7 +157,7 @@ Reads (GET) and requests that change nothing (e.g. logout without a session, an 
 Every failed request (any `4xx` or `5xx` response, including unknown routes and rate limits) writes one line and prints it with `console.error`:
 `[POST] {"time","status","method","path","message","userId?","ip"}`. `5xx` lines also carry the error name and stack.
 
-**Owner decision (2026-11-03):** the 401 from the session check on page load (`GET /user/me` with a missing or expired session cookie) stays logged: there is no valid session, so it counts as a failure.
+**Owner decision (2026-11-03):** the 401 from the session check on page load (`GET /users/me` with a missing or expired session cookie) stays logged: there is no valid session, so it counts as a failure.
 
 ### 8.3 What is never logged
 Request bodies, passwords, session tokens or cookies, API keys, query strings, names, emails, phone numbers, allergies, guest messages.

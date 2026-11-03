@@ -22,7 +22,7 @@ flowchart LR
     llm["src/llm/cent_ai_api.ts"]
   end
   mastra --> llm -->|"Anthropic Messages format<br/>(x-api-key)"| cent[("Cent AI<br/>deepseek-v4.1-flash")]
-  agent -->|"X-Agent-Key (role AGENT)<br/>POST /api/agent/*"| api
+  agent -->|"X-Agent-Key (role AGENT)<br/>POST /api/agents/*"| api
 
   subgraph api["resortos-booking-api (:4000)"]
     express["Express 5 + Zod + RBAC"]
@@ -76,7 +76,7 @@ sequenceDiagram
   alt fits the rules and capacity
     AG-->>G: read-back written by code + pendingBooking {draft, signed token}
     G->>AG: POST /chat {confirm: pendingBooking} (no model call)
-    AG->>A: POST /api/agent/reservations (Idempotency-Key = token)
+    AG->>A: POST /api/agents/reservations (Idempotency-Key = token)
     A-->>AG: 201 (guest account created if new)
     AG-->>G: "You're booked ... RSV-XXXXXX"
   else full
@@ -134,7 +134,7 @@ sequenceDiagram
 
 **Platform**
 * Sessions: one HttpOnly cookie holding a random token; the server keeps a `Session` row per sign-in (SHA-256 of the token), valid 1 hour from sign-in, no refresh, no idle timer. Sign-out deletes the row, so the cookie stops working at once. The assistant uses a seeded API key (`X-Agent-Key`, `ApiKey` table), not a session.
-* Route groups, each with its own middleware: `/api/public/*` none (menu, availability, health), `/api/auth/*` rate limit, `/api/user/*` and `/api/admin/*` sign-in check (+ admin check), `/api/agent/*` agent key check.
+* Route groups, each with its own middleware: `/api/public/*` none (menu, availability, health), `/api/auth/*` rate limit, `/api/users/*` and `/api/admins/*` sign-in check (+ admin check), `/api/agents/*` agent key check.
 * **PWA:** installable, works offline for the app shell only; booking data is always live.
 * Mobile-only layout; English only; prices shown as `Rp 320.000` on every browser.
 * **Logs:** every successful create/update/delete is one `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` (+ `console.log`); every 4xx/5xx is one tagged line in `logs/errors.log` (+ `console.error`). No bodies, secrets or personal data. Each file rotates at 5 MB, keeping one old copy.
