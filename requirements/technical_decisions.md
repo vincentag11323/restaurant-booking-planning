@@ -14,7 +14,7 @@ This doc records the choices that turn the PRD into concrete, buildable rules. G
 
 **Decision:** **PostgreSQL 17 + Prisma ORM 7** (as already stated in the PRD). The core reason: a single `UNIQUE (tableId, slotStart)` constraint makes double-booking impossible even under concurrent requests, with no locks or queues to write.
 
-Local dev: `docker compose up -d` (file included in the backend repo), `brew install postgresql@17`, or any hosted Postgres URL (e.g. Neon free tier) in `.env`.
+Local dev & tests: **PGlite** (embedded Postgres in WASM, via `@electric-sql/pglite-socket`). `npm run db:local` serves it on port 5432 and persists to `./.pglite`. `npm test` boots an in-memory copy, so neither needs Docker or a Postgres install. Verified against it: migrations, the `P2002` unique-violation mapping, transaction rollback, and the audit-log trigger. Production uses real PostgreSQL 17 (`docker compose up -d`, `brew install postgresql@17`, or a hosted URL such as Neon).
 
 ### 1.1 ORM: Prisma vs "just Zod" (decided 2026-11-03: **keep Prisma**)
 Zod and Prisma are different layers, and **both** are used:

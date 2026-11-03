@@ -52,7 +52,7 @@ type Reservation = {
 };
 ```
 
-**Reservation 400 messages (exact strings, asserted by tests):**
+**Reservation 400 messages (exact strings, asserted by tests).** Zod validation messages are prefixed with the field path, e.g. `partySize: Party size must be between 1 and 50`. Business-rule messages have no prefix.
 * `startTime must be one of 11:00, 13:30, 17:00, 19:30`
 * `Party size must be between 1 and 50`
 * `Selected slot is in the past or too far ahead`
