@@ -29,6 +29,9 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | A11 | Sign up with an email the assistant booked for | Claims the guest account; assistant bookings appear in "My bookings" | API agent, JEST agent | ✅ |
 | A12 | 10 failed logins from one IP in 5 minutes | One security alert in the audit log | JEST auth | ✅ |
 | A13 | Too many auth attempts | 429 with a JSON message | JEST environment | ✅ |
+| A14 | Sign out, then send a saved copy of the old cookie | `401 Invalid or expired token` at once; the `Session` row is gone | API auth, JEST auth, E2E | ⬜ new |
+| A15 | Session older than 1 hour (row still in the table) | `401 Invalid or expired token`; signing in again deletes the old row | JEST auth | ⬜ new |
+| A16 | Signing out on one device | Other devices' sessions keep working | JEST auth | ⬜ new |
 
 ## 2. Booking a table
 | # | Scenario | Expected | Covered by | Status |
@@ -90,6 +93,11 @@ People using the web app (PWA) and the booking API directly. For the AI assistan
 | S7 | Malformed JSON, unknown route, security headers | JSON 400/404, `nosniff`, no `x-powered-by` | API platform | ✅ |
 | S8 | Production mode | Secure cookie, trusts one proxy | JEST environment | ✅ |
 | S9 | Any failed request (4xx/5xx) | One JSON line in `logs/errors.log` + `console.error`; no bodies or secrets | JEST, E2E | ⬜ new |
+| S11 | Guest or admin cookie on `/agent/*` | `403 Forbidden` | API agent, JEST | ⬜ new |
+| S12 | Assistant key on public routes (`/menu`, `/availability`, `/auth/login`) | `403 Forbidden` | API agent, JEST | ⬜ new |
+| S13 | Old or forged cookie on a public route (`/auth/login`, `/menu`) | Ignored: sign-in and menu work | JEST | ⬜ new |
+| S14 | A key in `ApiKey` whose owner isn't `AGENT` | `401 Invalid API key` | JEST | ⬜ new |
+| S15 | User row removed while signed in | `401` on every route (sessions and key deleted with the user) | JEST | ⬜ new |
 | S10 | `errors.log` over 5 MB | Rotated to `.1`, older to `.2`/`.3`, at most 3 kept | JEST | ⬜ new |
 
 ## 7. Mobile and PWA

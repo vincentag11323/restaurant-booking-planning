@@ -7,6 +7,8 @@ PostgreSQL 17 via Prisma 7. This is the source of truth for `prisma/schema.prism
 ```
 User 1 ──── * Reservation 1 ──── * ReservationTable * ──── 1 DiningTable
                                          (live table locks)
+User 1 ──── * Session     (signed-in browsers; deleted on sign-out)
+User 1 ──── 0..1 ApiKey   (for now only the AGENT account has one)
 
 MenuItem   (standalone, seeded)
 AuditLog   (standalone, append-only)
@@ -30,12 +32,37 @@ AuditLog   (standalone, append-only)
 | `id` | text (cuid) | PK |
 | `email` | text | unique, stored lowercase |
 | `passwordHash` | text? | bcrypt, cost 12. **Null** for a guest account created by the assistant (sign-up with that email sets it, claiming the account) and for the assistant's own `AGENT` account |
-| `apiKeyHash` | text? unique | SHA-256 (hex) of `AGENT_API_KEY`, set by the seed on the `AGENT` account only; the key itself is never stored |
 | `name` | text | 1–100 chars |
 | `phone` | text? | optional |
 | `allergies` | text[] | lowercase tags, max 20 (e.g. `gluten`, `shellfish`) |
 | `role` | `Role` | default `USER`. `ADMIN` and `AGENT` only via seed |
 | `createdAt` | timestamptz | default now |
+
+### `Session` (one row per signed-in browser)
+| Column | Type | Rules |
+|---|---|---|
+| `id` | text (cuid) | PK |
+| `tokenHash` | text | **unique**. SHA-256 (hex) of the random token in the `session` cookie; the token itself is never stored |
+| `userId` | text | FK → `User`, cascade delete |
+| `createdAt` | timestamptz | default now (sign-in time) |
+| `expiresAt` | timestamptz | `createdAt + SESSION_TTL` (1 hour), never extended |
+
+Index: `userId`.
+* Sign-in / register: insert a row; delete that user's rows whose `expiresAt` has passed.
+* Every request: valid only if the row exists and `expiresAt > now`.
+* Sign-out: delete the row.
+
+### `ApiKey` (keys for non-browser callers)
+| Column | Type | Rules |
+|---|---|---|
+| `id` | text (cuid) | PK |
+| `name` | text | who it's for, e.g. `AI booking assistant` |
+| `keyHash` | text | **unique**. SHA-256 (hex) of the key; the key itself is never stored |
+| `userId` | text | FK → `User`, cascade delete. **unique** for now: one key per account |
+| `createdAt` | timestamptz | default now |
+
+* For now there is **one** key, owned by the `AGENT` account, and the auth middleware accepts a key only if its owner's role is `AGENT`.
+* Later (to be decided by the owner): keys for other callers, e.g. special users or other vendors. That would drop the one-key-per-account rule and may add scopes; not built now.
 
 ### `DiningTable` (seeded, read-only to the app)
 | Column | Type | Rules |
@@ -121,8 +148,9 @@ FOR EACH ROW EXECUTE FUNCTION audit_log_immutable();
 * 108 `DiningTable` rows.
 * ~10 `MenuItem` rows: Chicken Steak, Beef Steak, Barramundi, Fish & Chips, Classic Burger, plus seasonal fine-dining dishes, with allergen tags.
 * 1 `ADMIN` user from `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
-* 1 `AGENT` user (the AI booking assistant, `assistant@resortos.internal`): no password, `apiKeyHash` = SHA-256 of `AGENT_API_KEY`.
+* 1 `AGENT` user (the AI booking assistant, `assistant@resortos.internal`): no password, and its one `ApiKey` row (`keyHash` = SHA-256 of `AGENT_API_KEY`). Re-seeding with a new key replaces that row's hash.
 
 ## 5. Migrations
 * `prisma migrate dev` generates migrations from the schema. The trigger SQL is appended to the init migration by hand.
 * Production: `prisma migrate deploy`.
+* The migration that adds `ApiKey` copies any existing `User.apiKeyHash` into it, then drops that column.

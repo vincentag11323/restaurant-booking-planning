@@ -133,7 +133,8 @@ sequenceDiagram
 * Cent AI via the **Anthropic Messages** format (about 3× fewer input tokens than Responses). DeepSeek's unsigned "thinking" blocks are dropped before the AI SDK sees them. Each turn has a **25 s** limit.
 
 **Platform**
-* Sessions: one HttpOnly cookie, fixed 1 hour from sign-in, no refresh, no idle timer. No server-side revocation list. The assistant uses a seeded API key (`X-Agent-Key`), not a session.
+* Sessions: one HttpOnly cookie holding a random token; the server keeps a `Session` row per sign-in (SHA-256 of the token), valid 1 hour from sign-in, no refresh, no idle timer. Sign-out deletes the row, so the cookie stops working at once. The assistant uses a seeded API key (`X-Agent-Key`, `ApiKey` table), not a session.
+* One auth middleware on every request works out `{ userId, role }`; `/agent/*` is for the assistant only, every other route for guests and admins only.
 * **PWA:** installable, works offline for the app shell only; booking data is always live.
 * Mobile-only layout; English only; prices shown as `Rp 320.000` on every browser.
 * **Failure log:** every 4xx/5xx is one JSON line in `logs/errors.log` (no bodies, passwords or query strings), rotated at 5 MB, 3 old files kept.

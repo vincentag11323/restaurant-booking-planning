@@ -3,20 +3,38 @@
 
 Base URL: `/api`. JSON in/out. Times are ISO-8601 UTC strings in responses. Dates in requests are restaurant-local `YYYY-MM-DD`.
 
-**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production), valid **1 hour from sign-in** and never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>` (only its SHA-256 is stored; a wrong key gets `401 Invalid API key`). `Authorization: Bearer` is not accepted. No cookie → `401 Authentication required`; a forged or expired cookie → `401 Invalid or expired token`. The session is stateless (no database read per request); only the page-load check `GET /me` notices a deleted account and answers `401 Invalid or expired token`.  
+**Auth:** guests and admins: an `HttpOnly`, `SameSite=Lax` cookie `session` (path `/`, `Secure` in production). Its value is a long random token; the server stores only its SHA-256, in the `Session` table (`data_model.md`). A session lasts **1 hour from sign-in** and is never extended (`SESSION_TTL`, default `1h`). AI assistant: header `X-Agent-Key: <AGENT_API_KEY>`, checked against the `ApiKey` table (SHA-256 only, `data_model.md`). `Authorization: Bearer` is not accepted.  
+**When a session ends:** (1) **sign-out** deletes its `Session` row, so that cookie, and any copy of it, is refused from the next request on; (2) **time**: once `expiresAt` (sign-in + 1 hour) has passed the row no longer counts, so the session ends by itself with no job or timer. Removing a user removes their sessions and API key (cascade). An ended session gets `401 Invalid or expired token` on every route that needs sign-in.  
 **CSRF:** `SameSite=Lax` plus an origin rule: a request other than GET/HEAD/OPTIONS whose `Origin` header isn't `CORS_ORIGIN` gets `403 Cross-origin request blocked`.  
 **Errors:** always `{ "message": string }`, using 400 / 401 / 403 / 404 (see `PRD_BOOKING_v1.md` §4.2).
 
 Legend: 🌐 public · 👤 USER (or any logged-in user where noted) · 🛡️ ADMIN · 🤖 AGENT (the AI booking assistant's service account)
 
-**RBAC:** routes check permissions (`src/lib/permissions.ts`). `AGENT` gets `403` on every route except §6; admins can't create bookings.
+### Every request: the auth middleware
+One middleware runs on **every** `/api` request, before any route. It works out who is calling and hands that to the route; routes never read the user id or role from the body or query.
+
+1. **`X-Agent-Key` header present** (the cookie is then ignored): hash it, look it up in `ApiKey` together with its owner. Valid only if the row exists and the owner's role is `AGENT` → caller is `{ userId, role: "AGENT" }`. Otherwise the caller is signed out with reason `Invalid API key`. An empty header counts as no header.
+2. **Else a `session` cookie present:** hash it, look it up in `Session` together with its user. Valid only if the row exists and `expiresAt` is in the future → caller is `{ userId, role, sessionId }` (role `USER` or `ADMIN`, read from the user row, so a role change applies at once). Otherwise the caller is signed out with reason `Invalid or expired token`.
+3. **Neither:** the caller is signed out with reason `Authentication required`.
+
+The result is attached to the request (`req.auth`). Then the **route rules** below decide who may continue:
+
+| Routes | Who may call | Signed out (or bad credentials) | Wrong role |
+|---|---|---|---|
+| `/agent/*` (§6) | `AGENT` only | `401` with the reason above | `USER` / `ADMIN` → `403 Forbidden` |
+| `/me`, `/reservations`, `/menu/recommendations` (§2, §3, §4) | `USER` / `ADMIN` as each row says | `401` with the reason above | `AGENT` → `403 Forbidden` |
+| `/admin/*` (§5) | `ADMIN` only | `401` with the reason above | `USER` / `AGENT` → `403 Forbidden` |
+| Public: `/auth/*`, `/menu`, `/availability` | anyone signed out, guests, admins | allowed: bad or expired credentials are **ignored** here, so a guest with an old cookie can still sign in | `AGENT` → `403 Forbidden` |
+| `/health` | anyone, including `AGENT` | allowed | — |
+
+**RBAC:** two layers. The route rules above (agent routes are for the assistant only; every other route is for guests and admins only), then a permission check per route (`src/lib/permissions.ts`). Admins can't create bookings.
 
 ## 1. Auth
 | Method | Path | Access | Body | Success | Errors |
 |---|---|---|---|---|---|
-| POST | `/auth/register` | 🌐 | `{ email, password (8–72), name, phone? }` | `201 { user }` + `session` cookie | `400` validation / `Email is already registered` |
-| POST | `/auth/login` | 🌐 | `{ email, password }` | `200 { user }` + `session` cookie | `400` validation, `401 Invalid email or password` |
-| POST | `/auth/logout` | 🌐 | — | `200 { message }`, cookie cleared | — |
+| POST | `/auth/register` | 🌐 | `{ email, password (8–72), name, phone? }` | `201 { user }` + `session` cookie (a new `Session` row) | `400` validation / `Email is already registered` |
+| POST | `/auth/login` | 🌐 | `{ email, password }` | `200 { user }` + `session` cookie (a new `Session` row; that user's expired rows are deleted) | `400` validation, `401 Invalid email or password` |
+| POST | `/auth/logout` | 🌐 | — | `200 { message }`: deletes this cookie's `Session` row (if any) and clears the cookie. Sessions on other devices stay. | — |
 
 `user` = `{ id, email, name, phone, allergies, role }`. There is no refresh: after 1 hour every call returns `401` and the guest signs in again. The app checks for a session on page load with `GET /me`. Rate limit: 20 req / 15 min / IP on `/auth/*`; over the limit → `429 { message: "Too many attempts. Please wait a few minutes and try again." }`.
 
