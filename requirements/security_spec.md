@@ -4,6 +4,13 @@
 The app stores guest personal data (name, email, phone number, allergy information), so protecting it is a top priority. No payment data is processed in v1.
 
 ## 1. Authentication & Authorization
+
+> **APPROVED 2026-11-03, NOT YET IMPLEMENTED (next session): simpler sessions.**
+> * Guests and admins: **one HttpOnly session cookie, fixed 1 hour from sign-in** (not extended by activity), then signed out. `SameSite=Lax`, `Secure` in production. No access token in memory, no refresh token, no `/api/auth/refresh`, no `ACCESS_TOKEN_TTL`.
+> * PWA: **no idle timer.** When the session ends, screens keep the data they already show; the next server call returns 401 and the app goes to sign-in.
+> * AI assistant: a **predefined API key** (`AGENT_API_KEY`) created at seeding; only its hash is stored. Sent as `X-Agent-Key`; maps to role `AGENT` with the same two permissions. No agent password.
+> * Keep CSRF safe with `SameSite=Lax` + the CORS origin rule, and add a test for it. Update api_spec.md, DIAGRAM.md, READMEs and every test helper that sends `Authorization: Bearer`.
+
 * **Role-Based Access Control (RBAC):** Three roles, `USER`, `ADMIN` and `AGENT` (the AI booking assistant, planned in `agent_spec.md` §5.5). Routes check permissions; `AGENT` may only book on a guest's behalf and look up one guest by exact email.
   * Guests can only see and change **their own** reservations and profile. Requesting another guest's reservation returns `404 Not Found`, so record IDs cannot be probed.
   * Admins have **read-only** access to all reservations, stats and exports. There is no admin endpoint that creates, edits or deletes bookings.
