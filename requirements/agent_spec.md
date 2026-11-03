@@ -80,15 +80,25 @@ Errors use the same contract as the API: `{ message }` with 400 (bad input), 429
 The actual booking is **not** a model tool (§5.3).
 
 ### 4.3 Backend change (`resortos-booking-api`), approved
-`POST /api/agent/reservations`, authenticated with a **service key** (`X-Agent-Key` header, env `AGENT_API_KEY`), never callable by browsers.
-```ts
-{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp }
-```
-* Same allocation, capacity and double-booking rules as `POST /api/reservations` (shared code path).
-* Data model (D1): `User.passwordHash` becomes optional (password-less **guest account**, found or created by email). `Reservation.source` (`APP` | `AGENT`) is added. Sign-up with a guest account's email **claims** it (sets the password), so earlier assistant bookings appear in "My bookings".
-* Audit: `CREATE_RESERVATION` with `metadata.source = "AGENT"` and the guest's IP.
-* Admin log and export show "Booked via assistant" with the guest's email/phone.
+The backend learns a third role, **`AGENT`** (§5.5), and two agent-only endpoints:
+
+| Method | Path | Permission | Purpose |
+|---|---|---|---|
+| POST | `/api/agent/reservations` | `reservation:create_on_behalf` | Book for a guest by email. Body: `{ email, phone?, branch, sector, date, startTime, partySize, specialRequests?, clientIp }`, header `Idempotency-Key` |
+| GET | `/api/agent/guests/:email` | `guest:read_one` | Look up **one** guest by exact email. Returns only `{ exists, upcomingAssistantBookings }`, no name, phone or bookings. No list or search |
+
+* Booking uses the same allocation, capacity and double-booking code as `POST /api/reservations` (shared function, not a copy).
+* Data model (D1): `User.passwordHash` becomes optional (password-less **guest account**, found or created by email). Sign-up with a guest account's email **claims** it (sets the password), so earlier assistant bookings appear in "My bookings".
+* Each reservation records **who booked it**: `source` (`APP` | `AGENT`) and `createdById` (the guest for app bookings, the agent's service account for assistant bookings).
+* Audit: `CREATE_RESERVATION` with `actorId` = agent account, `metadata: { source: "AGENT", onBehalfOf: <guest id>, clientIp }`.
 * `notify()` sends the confirmation to the guest email (still a log stub in v1).
+
+### 4.4 Admin visibility (`resortos-booking-web`)
+* Booking log cards show a **"Booked by AI assistant"** label on agent bookings. The label marks a real `source` value, so it's state, not decoration.
+* New filter **Booked by: All / Guest app / AI assistant** (`?source=APP|AGENT` on `GET /api/admin/reservations`).
+* Detail sheet adds a **Booked by** row: "AI assistant, on behalf of <guest email>" or "Guest (app)".
+* Day view adds "of which N via AI assistant" under active bookings.
+* CSV/JSON export adds a `source` column.
 
 ## 5. Safety & Guardrails
 
@@ -116,7 +126,23 @@ User text is treated as data. Whatever the message says ("ignore your rules…",
 | Party size and window rules | backend (existing) |
 | Unverified email risk | See decision D2 |
 
-### 5.5 Privacy
+### 5.5 RBAC: the agent as a principal
+Three roles. Every route checks a **permission**, and roles map to permissions in one table in code:
+
+| Permission | USER | ADMIN | AGENT |
+|---|---|---|---|
+| Own profile and own reservations (read, create, reschedule, cancel) | ✅ | | |
+| Admin stats, booking log, detail, export (read-only) | | ✅ | |
+| `reservation:create_on_behalf` (book for a guest email) | | | ✅ |
+| `guest:read_one` (one guest by exact email, minimal fields) | | | ✅ |
+| Public: availability, menu | ✅ | ✅ | ✅ |
+
+* **Everything else is `403` for `AGENT`**: no reading or changing reservations, no admin routes, no profile, no listing or searching users. A test calls every other route with an agent token and expects `403`.
+* **Now:** a seeded service account (`assistant@resortos.internal`, role `AGENT`, password from env) signs in through the normal login and gets the usual 15-minute JWT, so the backend knows the request comes from the AI. When a call returns `401`, the agent simply signs in again (no refresh cookie to manage). The account can't be created by sign-up and has no "My bookings".
+* **Later (planned):** replace the login with a **scoped API key** (hashed in the DB, revocable, rate-limited) carrying exactly these two permissions. Routes check permissions, not how the caller authenticated, so the swap doesn't touch the endpoints.
+* The agent never sees other guests' data: it can only ask "does this one email exist, and how many upcoming assistant bookings does it have?"
+
+### 5.6 Privacy
 The email and phone are used only for the booking and its confirmation. They're never sent to the LLM; the model sees `contact: provided`. The agent logs no message content.
 
 ## 6. Framework Evaluation: Mastra vs LangGraph
@@ -143,7 +169,7 @@ resortos-booking-agent/
   src/
     types/          # llm.ts (built), BookingDraft, ChatRequest, Slot, Branch... (own copies, decoupled)
     llm/            # cent_ai_api.ts (built): the ONLY provider-specific file; returns LlmProvider
-    config.ts       # env: LLM_*, BOOKING_API_URL, AGENT_API_KEY, rate limits
+    config.ts       # env: LLM_*, BOOKING_API_URL, AGENT_EMAIL/AGENT_PASSWORD (service account), AGENT_DRAFT_SECRET, rate limits
     guard.ts        # topic classifier
     agent.ts        # Mastra agent + system prompt
     tools/          # checkAvailability, proposeBooking
@@ -252,7 +278,7 @@ Style finding: the model answers with markdown tables and em dashes. The system 
 3. One plain request → check latency and `usage.cost`.
 4. Topic-guard output: JSON from the model validated by Zod, with no reliance on provider-specific structured-output flags.
 
-**Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design keeps guest email/phone out of prompts (§5.5).
+**Considerations:** Cent AI is a third-party reseller in front of the model vendors, so prompts pass through it. The design keeps guest email/phone out of prompts (§5.6).
 
 ## 12. Provider Adapter (built 2026-11-03)
 The agent calls a provider-neutral interface, so changing AI vendors means replacing one file:
@@ -323,11 +349,12 @@ All deterministic tests use a **scripted fake `LlmProvider`** (no AI calls, no c
 | PII to the LLM | Captured fake-model requests contain **no email or phone** |
 | Abuse limits | 11th chat in a minute → `429`; 4th assistant booking in an hour from one IP → `429`; 3rd upcoming booking for one email → F5 |
 | Input bounds | > 30 turns, message > 2,000 chars, missing/invalid email, invalid phone, non-JSON → `400` |
-| Agent-only endpoint (API) | Missing or wrong `X-Agent-Key` → `401` (constant-time compare); key never logged; `USER`/`ADMIN` tokens rejected |
+| RBAC (API) | No token → `401`; `USER`/`ADMIN` tokens on agent routes → `403`; **agent token on every non-agent route → `403`**; `GET /api/agent/guests/:email` returns only `{ exists, upcomingAssistantBookings }` and can't list or search; the agent account can't sign up, refresh into another role, or appear in "My bookings" |
 | Guest accounts (API) | Password-less account can't log in (same `401` as a wrong password, no enumeration); sign-up with a guest email claims it and keeps its bookings; sign-up with a normal account's email still `400` |
 | Idempotency (API) | Same `Idempotency-Key` twice → one reservation, same response |
 | Logging | Chat content isn't logged; only intent, tool names, status and cost |
-| Audit (API) | Assistant bookings audited with `source: AGENT` and the guest IP |
+| Audit (API) | Assistant bookings audited with the agent as actor, `onBehalfOf` guest, `source: AGENT` and the guest IP |
+| Admin visibility (web) | "Booked by AI assistant" label, source filter, detail row and export column (Playwright UI) |
 
 ### 14.3 Coverage
 * Backend keeps **100%** Jest coverage, plus Playwright API tests for the new endpoint and the sign-up claim.
@@ -349,7 +376,8 @@ Each step is test-first and ends in a commit; nothing ships to guests until step
 |---|---|---|---|
 | 0 | ✅ Provider adapter + live pings | agent | `cent_ai_api.ts` with 16 tests; both formats return 200 |
 | 1 | Verify tool calling (D9) | agent | `npm run smoke` shows a tool call from the chosen model |
-| 2 | Backend: password-less guest accounts + sign-up claim, `source`, `POST /api/agent/reservations` (agent key, per-email cap, `Idempotency-Key`) | api | Playwright + Jest green, coverage still 100% |
+| 2 | Backend: `AGENT` role + permission table, agent service account, password-less guest accounts + sign-up claim, `source`/`createdById`, the two agent endpoints (per-email cap, `Idempotency-Key`), admin `source` filter | api | Playwright + Jest green, coverage still 100% |
+| 2b | Admin UI: "Booked by AI assistant" label, filter, detail row, day-view count | web | Playwright UI green |
 | 3 | Agent core: booking rules prompt (today's date in UTC+7 injected), topic guard, `checkAvailability` + `proposeBooking` tools, tool loop | agent | Deterministic tests with a scripted fake `LlmProvider` |
 | 4 | Confirm-gate + draft token + `findAlternatives` + `POST /chat` + rate limits + failure mapping (§13) | agent | Every §13.2 row and §14.2 threat tested |
 | 5 | End-to-end E1–E3 with the real model (§14.4, max 5 calls) | agent | All pass, cost recorded |

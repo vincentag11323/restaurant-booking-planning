@@ -4,7 +4,7 @@
 The app stores guest personal data (name, email, phone number, allergy information), so protecting it is a top priority. No payment data is processed in v1.
 
 ## 1. Authentication & Authorization
-* **Role-Based Access Control (RBAC):** Two roles, `USER` and `ADMIN`.
+* **Role-Based Access Control (RBAC):** Three roles, `USER`, `ADMIN` and `AGENT` (the AI booking assistant, planned in `agent_spec.md` §5.5). Routes check permissions; `AGENT` may only book on a guest's behalf and look up one guest by exact email.
   * Guests can only see and change **their own** reservations and profile. Requesting another guest's reservation returns `404 Not Found`, so record IDs cannot be probed.
   * Admins have **read-only** access to all reservations, stats and exports. There is no admin endpoint that creates, edits or deletes bookings.
 * **Token Management:** **JWT** access tokens with a short expiry (**15 minutes**), plus a **Refresh Token** (7 days) stored in an `HttpOnly`, `SameSite=Lax`, `Secure` (in production) cookie.
