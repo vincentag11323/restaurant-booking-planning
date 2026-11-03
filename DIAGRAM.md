@@ -140,3 +140,20 @@ sequenceDiagram
 * **Logs:** every successful create/update/delete is one `[POST]`/`[PATCH]`/`[DELETE]`-tagged JSON line in `logs/app.log` (+ `console.log`); every 4xx/5xx is one tagged line in `logs/errors.log` (+ `console.error`). No bodies, secrets or personal data. Each file rotates at 5 MB, keeping one old copy.
 * **Audit log** is append-only, enforced by a database trigger.
 * Dev and tests run on **PGlite** (embedded Postgres); race tests and production use **real PostgreSQL** (`npm run test:pg`).
+
+## 6. Agents talking to other agents (PLANNED, not built)
+**Owner note, 2026-11-04.** Later, the booking assistant may hand questions it can't answer to other specialist agents, and other agents may ask it about bookings. Nothing here is designed or built yet: the protocol, who may call whom, and what data may be shared are still open.
+
+```mermaid
+flowchart LR
+  guest(["Guest"]) --> booking["Booking assistant<br/>(resortos-booking-agent, today)"]
+  booking -.->|PLANNED| marketing["Marketing agent<br/>(campaigns, offers)"]
+  booking -.->|PLANNED| dietary["Dietary / health agent<br/>(extra allergy and diet info)"]
+  marketing -.->|PLANNED| booking
+  dietary -.->|PLANNED| booking
+  booking -->|"X-Agent-Key"| api["Booking API"]
+```
+
+* **Possible topics:** marketing campaigns and offers; extra dietary and health information beyond the allergy tags the app stores today.
+* **Already prepared for it:** the agent server's routes are grouped (`/agents/public/*`, `/agents/users/*`), so an agent-to-agent group can be added without moving routes; the booking API's `ApiKey` table can hold keys for other callers once the owner decides who they are (`DATA_MODEL.md`, `ApiKey`).
+* **To decide before building:** the protocol between agents; how each agent proves who it is; which guest data may pass between agents (health information is sensitive under UU PDP, `SECURITY_SPEC.md` §4, and is never used for marketing); rate limits for agent-to-agent calls.
