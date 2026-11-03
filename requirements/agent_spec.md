@@ -175,3 +175,18 @@ resortos-booking-agent/
 | D11 | Key safety | In the Cent AI dashboard, set a **daily spend limit** and a **model allowlist** (`deepseek-v4.1-flash` only) on this key. New keys have no limits |
 | D12 | Guest data sent to the model | Chat text goes through Cent AI to the model vendor (DeepSeek). Email/phone stay out of prompts, but guests may type names or dietary details. Recommendation: one-line notice in the chat UI ("Messages are processed by an AI service to make your booking") for UU PDP transparency |
 | D13 | Language | v1 scope is English only, but guests here may write in Bahasa Indonesia. Options: (a) reply in English only, (b) reply in the guest's language (no extra code; the model handles it). Recommendation: **(b)** with booking read-backs kept in a fixed, clear format |
+
+## 13. Build Plan (after D1–D13 are answered)
+Each step is test-first and ends in a commit; nothing ships to guests until step 6.
+
+| # | Step | Repo | Done when |
+|---|---|---|---|
+| 0 | ✅ Provider adapter + live pings | agent | `cent_ai_api.ts` with 16 tests; both formats return 200 |
+| 1 | Verify tool calling (D9) | agent | `npm run smoke` shows a tool call from the chosen model |
+| 2 | Backend: guest booking fields + `POST /api/agent/reservations` (service key, per-email cap) | api | Playwright + Jest green, coverage still 100% |
+| 3 | Agent core: booking rules prompt (today's date in UTC+7 injected), topic guard, `checkAvailability` + `proposeBooking` tools, tool loop | agent | Deterministic tests with a scripted fake `LlmProvider` |
+| 4 | Confirm-gate + `POST /chat` + rate limits + error mapping (`LlmError` → 429/502) | agent | No path books without `confirmDraft` (tested) |
+| 5 | Eval set (~40 prompts) against the real model | agent | All refusals correct, zero unconfirmed bookings, cost per conversation recorded |
+| 6 | Chat screen in the PWA (D4) | web | Playwright UI tests with the agent mocked |
+
+Ports: API 4000, web 5173, **agent 4300** (4100 and 4200 are already used by test servers).
