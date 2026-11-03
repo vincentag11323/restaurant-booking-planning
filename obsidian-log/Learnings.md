@@ -605,3 +605,53 @@ Lessons about how to work with this user and project.
 - Monitor: alert if error rate spikes; production failures should stand out
 
 **Session:** [[Session Log/2026-11-03#Real End-to-End Suite]]
+
+---
+
+## 32. PGlite Cannot Judge Concurrent Transactions; Run Race Tests on Real PostgreSQL
+
+**Rule:** PGlite runs all connections in one session. Race tests that depend on concurrent transactions must run on real PostgreSQL, not PGlite.
+
+**Why:**
+- PGlite serializes; two simultaneous confirmations for a new email still run sequentially
+- Real PostgreSQL: concurrent requests upserting the same new email race; the losers hit the unique email constraint and returned 500 (no duplicate rows, thanks to the constraint)
+- Prisma upsert is not atomic under concurrency (both win the race, both insert)
+- Per-email race test only caught on real Postgres
+
+**Context:** Two guests confirming a booking for the same email (assistant's second attempt) returned 500. Fixed with INSERT ... ON CONFLICT DO NOTHING.
+
+**Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
+
+---
+
+## 33. Built-in Intl Currency Formatting Differs Between Browser Engines
+
+**Rule:** Intl.NumberFormat locale-specific formatting is not consistent across Safari, Firefox, Chrome. Format money explicitly with a consistent pattern.
+
+**Why:**
+- Safari formatted prices as Rp320.000 (no space)
+- Firefox/Chrome/other formatted as Rp 320.000 (space before thousands separator)
+- User sees different UI on different devices
+- Built-in Intl is locale-aware but not browser-consistent
+
+**Context:** Fixed currency formatting to Rp 320.000 everywhere (manual template, not Intl).
+
+**Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
+
+---
+
+## 34. React Effect as Expression Body Returns That Expression
+
+**Rule:** A React useEffect with an expression body (no braces) returns the expression value, not undefined. Keep effect bodies in braces.
+
+**Why:**
+- `useEffect(() => doSomething(), [])` returns the result of doSomething()
+- If doSomething() returns a value, React treats it as a cleanup function
+- If cleanup function is not a function, React crashes on unmount
+- Mocked UI tests found crash on first reply
+
+**Pattern:**
+- ✗ `useEffect(() => setState(value), [])`
+- ✓ `useEffect(() => { setState(value); }, [])`
+
+**Session:** [[Session Log/2026-11-03#To-be-Tested Round + Chat UI]]
