@@ -21,8 +21,6 @@ Read in this order. Every v1 code change must trace back to one of these docs (s
 | 14 | [e2e_spec.md](e2e_spec.md) | Real end-to-end suite (`resortos-booking-e2e`): no mocking, test database, videos, results | ✅ |
 | — | [../AGENTS_TO_BE_USED.md](../AGENTS_TO_BE_USED.md) | Agent skills and when to use them | ✅ |
 
-**Reference only (Bahasa, hospital template):** `alur_kerja_workflow.md`, `sistem_audit_audit_trail.md`, `spesifikasi_keamanan_security.md`, `rencana_pengujian_testing.md`.
-
 ### Per-repo docs
 * `resortos-booking-api/README.md`, `resortos-booking-web/README.md` (+ `DESIGN.md`), `resortos-booking-agent/README.md` (+ `AGENT_CAPABILITIES.md`): setup, run, test.
 * `deployment.md`: post-v1 (hosting and CI/CD are out of scope for v1).
