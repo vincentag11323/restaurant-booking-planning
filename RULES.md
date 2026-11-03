@@ -23,6 +23,18 @@ Each stage follows its ECC step: **plan → tdd → code review → verify**.
 | 3 | **Review** | Reviewers from `AGENTS_TO_BE_USED.md` §5 that apply, run side by side: `ecc:security-reviewer` (Opus) for auth or personal data, `ecc:database-reviewer` (Sonnet) for schema or queries, `ecc:typescript-reviewer` (Sonnet), `ecc:react-reviewer` (Sonnet) for `.tsx`, plus a Spec check against `requirements/` (`mattpocock-skills:code-review` Standards + Spec) | Report findings with `file:line` and the spec section each one breaks | Edit files. Fixes go back to stage 2 (Build), then are reviewed again |
 | 4 | **Test** | `general-purpose`, Sonnet | Runs every suite (API Jest + Playwright, web, agent, the full e2e stack), then probes security (auth bypass, CSRF, expired or forged sessions, key leaks, injection), vulnerabilities (`npm audit`) and usability (what the user sees when a session ends, error messages). Adds a test only where a spec rule has none | Fix app code (failures go back to stage 2) |
 
+### Stages 3 and 4 run per repo, in parallel (owner rule, 2026-11-03)
+Stages 1 and 2 stay sequential. For Review and Test, the orchestrator launches **one agent per changed repo, all at the same time**, then waits for all of them before moving on:
+
+| Repo | Review agent (stage 3) covers | Test agent (stage 4) runs |
+|---|---|---|
+| `resortos-booking-api` | Opus: security, database (schema, migration, queries), TypeScript, spec | Jest + Playwright API suites, security probes, `npm audit` |
+| `resortos-booking-agent` | Sonnet: security (key handling, logging), TypeScript, spec | `npm test`, typecheck, `npm audit` |
+| `resortos-booking-web` | Sonnet: React, TypeScript, security (no tokens in JS), usability, spec | mocked Playwright suite, build, `npm audit` |
+| `resortos-booking-e2e` | Sonnet: test quality (does each test prove its spec row), TypeScript | the full real-stack run (all repos), cross-browser, usability |
+
+Each per-repo review agent loads `ecc:code-review` and `mattpocock-skills:code-review` (Standards + Spec) and applies the checklists of the `AGENTS_TO_BE_USED.md` §5 reviewers that fit its repo. Each agent stays inside its own repo (reading other repos' code is fine; editing nothing in Review, only tests in its own repo in Test). Test agents use the ports their repo's config already uses, so they don't clash. Fixes from any repo go back to stage 2, then that repo's stage 3 and 4 agents run again.
+
 The Haiku Obsidian logger runs after stage 4 (see `AGENTS_TO_BE_USED.md` §4). The orchestrator commits.
 
 ## 2. No hallucination, necessary files only
