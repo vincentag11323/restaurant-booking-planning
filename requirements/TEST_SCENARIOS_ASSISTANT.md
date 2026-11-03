@@ -1,7 +1,7 @@
 # Test Scenarios: Guest → AI Assistant → Booking API
 **ResortOS AI — Booking Assistant**
 
-A guest chats with the assistant (`POST /chat`, email required, phone optional). The assistant uses the AI model to understand the request and calls the booking API as the `AGENT` account. For people using the app directly see [TEST_SCENARIOS_APP.md](TEST_SCENARIOS_APP.md). What the assistant can and can't do: [`resortos-booking-agent/AGENT_CAPABILITIES.md`](../resortos-booking-agent/AGENT_CAPABILITIES.md).
+A guest chats with the assistant (`POST /agents/users/chats`, email required, phone optional). The assistant uses the AI model to understand the request and calls the booking API as the `AGENT` account. For people using the app directly see [TEST_SCENARIOS_APP.md](TEST_SCENARIOS_APP.md). What the assistant can and can't do: [`resortos-booking-agent/AGENT_CAPABILITIES.md`](../resortos-booking-agent/AGENT_CAPABILITIES.md).
 
 **Status:** ✅ automated and passing · 🤖 passed with the real AI model (Cent AI, `deepseek-v4.1-flash`) · ⬜ to be tested
 

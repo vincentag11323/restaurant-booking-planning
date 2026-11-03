@@ -22,7 +22,7 @@ Any route the role can't access redirects (USER → `/`, ADMIN → `/admin`, gue
 ## 2. State & Data
 * **Two API folders, one per service (separation of concerns):**
   * `src/backendApi/`: everything that calls the booking API (`/api/...`): fetch wrapper (session cookie), auth.
-  * `src/agentApi/`: everything that calls the booking assistant (`/agent/...` → agent `POST /chat`). No auth; the guest's email goes in each request.
+  * `src/agentApi/`: everything that calls the booking assistant (`POST /agents/users/chats`, proxied to the agent server). No auth; the guest's email goes in each request.
   * Pages import from these folders only; no page calls `fetch` directly.
 * **Naming:** folders lowercase, kebab-case when multi-word; React components PascalCase; other files camelCase.
 * Fetch wrapper: sends the HttpOnly session cookie (`credentials: "include"`). On a `401` outside `/api/auth/*` it signs the guest out locally and goes to sign-in. No refresh, no retry, no idle timer.

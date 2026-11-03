@@ -13,7 +13,7 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 |---|---|---|
 | `src/types/` | **All shared types**: `api.ts` mirrors the booking API's request and response shapes (`API_SPEC.md`), `chat.ts` the assistant's | Hold code that runs |
 | `src/backendApi/` | **All calls to the booking API.** `client.ts` is the one fetch wrapper (cookie, 401 handling, errors). One file per route group or resource (`auth.ts`, `users.ts`, `reservations.ts`, `menus.ts`, `availabilities.ts`, `admins.ts`) with one typed function per endpoint, e.g. `listMyReservations(): Promise<Reservation[]>` | Be skipped: pages never build API paths themselves |
-| `src/agentApi/` | All calls to the booking assistant (`/agent/chat`) | Share code with `backendApi` (no auth there) |
+| `src/agentApi/` | All calls to the booking assistant (`/agents/users/chats`) | Share code with `backendApi` (no auth there) |
 | `src/auth/` | The session context (`GET /api/users/me` on load, sign-in, sign-out) | — |
 | `src/pages/` | One component per screen; `pages/admin/` for admin screens | Call `fetch` or write API paths |
 | `src/components/` | Reusable UI pieces (`Layout`, `Dialog`, buttons, banners) | Call the API |
@@ -31,7 +31,7 @@ Applies to `resortos-booking-web` (React + Vite PWA). Owner rule, 2026-11-04. Sc
 * The session lives only in the HttpOnly cookie. Never read or store tokens in `localStorage`, `sessionStorage` or `document.cookie`.
 * A `401` outside `/api/auth/*` signs the user out locally and sends them to sign in (done once, in `client.ts`). No refresh, no retry.
 * Never use `dangerouslySetInnerHTML`. React's escaping is the defence against XSS.
-* The service worker never caches `/api/*` or `/agent/*`.
+* The service worker never caches `/api/*` or `/agents/*`.
 
 ## 5. Accessibility and layout
 * Use real elements (`button`, `a`, `label`, `form`) with visible labels; every input has a `<label>`.

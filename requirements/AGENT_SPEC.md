@@ -34,8 +34,8 @@ A chat assistant that answers **booking questions only** and can **book a table 
 
 ```
  Guest (chat UI)                 resortos-booking-agent                 resortos-booking-api
- ───────────────   POST /chat    ┌───────────────────────────┐   HTTP   ┌──────────────────────────┐
- messages +       ─────────────▶ │ 1. validate input (Zod)   │ ───────▶ │ GET /api/availability     │
+ ────   POST /agents/users/chats ┌
+ messages +       ─────────────▶ │ 1. validate input (Zod)   │ ───────▶ │ GET /api/public/          │
  { email, phone? }               │ 2. topic guard            │          │ POST /api/agents/         │
                   ◀───────────── │ 3. agent + 2 tools        │ ◀─────── │      reservations (NEW)   │
  reply + booking?                │ 4. confirm-gate in code   │          └──────────────────────────┘
@@ -52,26 +52,36 @@ A chat assistant that answers **booking questions only** and can **book a table 
 ## 4. Interfaces
 
 ### 4.1 Agent API (this repo)
-`POST /chat`
+**Route groups (owner rule, 2026-11-04):** every agent server path starts with `/agents`, then a group, like the booking API. Names are plural.
+
+| Group | Middleware | Routes |
+|---|---|---|
+| `/agents/public/*` | **none** | `GET /agents/public/health`, `GET /agents/public/docs`, `GET /agents/public/docs/openapi.json` |
+| `/agents/users/*` | the chat checks: per-IP and per-email rate limits, the confirmation limit, body validation. **No sign-in yet** (the guest's email travels in the body); a sign-in check can be added to this group later without moving routes | `POST /agents/users/chats` |
+
+`/agents/users/chats` is a collection so it can grow later (e.g. `GET /agents/users/chats/:id`); the protocol for that isn't decided. Today `POST /agents/users/chats` runs one chat turn and stores nothing.
+
+`POST /agents/users/chats`
 ```ts
 // request
 {
   contact: { email: string; phone?: string };            // email required, validated by Zod, never parsed by the LLM
   messages: { role: "user" | "assistant"; content: string }[];   // max 30 turns, 2,000 chars each
-  confirmDraft?: BookingDraft;                            // sent back only when the guest taps "Yes, book it"
+  confirm?: PendingBooking;                               // sent back only when the guest taps "Book it" (a read-back or one of the alternatives)
 }
 // response 200
 {
   reply: string;
-  pendingBooking?: BookingDraft;     // details read back, waiting for the guest's "yes"
+  pendingBooking?: PendingBooking;   // details read back (draft + signed token), waiting for the guest's "yes"
+  alternatives?: PendingBooking[];   // up to 3 bookable options when the request can't be seated (§13.1)
   booking?: { code: string; slotStart: string; slotEnd: string; tableIds: string[] };
 }
 ```
-Errors use the same contract as the API: `{ message }` with 400 (bad input), 429 (rate limit), 502 (LLM or booking API unavailable).
+Errors keep the chat shape so the chat screen can always show them: `{ reply }` (a sentence for the guest) with 400 (bad input or an expired read-back), 404 (unknown path), 429 (rate limits), 500, 502 (the AI model or the booking API failed) and 503 (busy, with `Retry-After`).
 
-`GET /health` → `{ status: "ok" }`
+`GET /agents/public/health` → `{ status: "ok" }`
 
-**Interactive docs (owner request 2026-11-04):** the agent server is an API too, so it publishes the same kind of docs as the booking API (`API_SPEC.md` §7a): `GET /docs` (Swagger UI via `swagger-ui-express`) and `GET /docs/openapi.json` (OpenAPI 3.1 built with `@asteasolutions/zod-to-openapi` from the Zod schema that validates `POST /chat`). Every route has a plain-language summary and description, examples of each reply kind (a normal reply, a read-back with `pendingBooking`, a confirmed `booking`, a rate-limit reply), and every error. Shown in development and tests; in production only when `API_DOCS=true`. Same drift-guard test.
+**Interactive docs (owner request 2026-11-04):** the agent server is an API too, so it publishes the same kind of docs as the booking API (`API_SPEC.md` §7a): `GET /agents/public/docs` (Swagger UI via `swagger-ui-express`) and `GET /agents/public/docs/openapi.json` (OpenAPI 3.1 built with `@asteasolutions/zod-to-openapi` from the Zod schema that validates `POST /agents/users/chats`). Every route has a plain-language summary and description, examples of each reply kind (a normal reply, a read-back with `pendingBooking`, a confirmed `booking`, a rate-limit reply), and every error. Shown in development and tests; in production only when `API_DOCS=true`. Same drift-guard test.
 
 ### 4.2 Tools the model can call (and nothing else)
 | Tool | Input (Zod) | Calls |
@@ -182,7 +192,7 @@ resortos-booking-agent/
     agent.ts        # Mastra agent + system prompt
     tools/          # checkAvailability, proposeBooking
     bookingApi.ts   # HTTP client for resortos-booking-api
-    server.ts       # POST /chat, GET /health
+    server.ts       # POST /agents/users/chats, GET /agents/public/health
   tests/
   README.md
 ```
@@ -348,7 +358,7 @@ Each step is test-first and ends in a commit; nothing ships to guests until step
 | 2 ✅ | Backend: `AGENT` role + permission table, agent service account, password-less guest accounts + sign-up claim, `source`/`createdById`, the two agent endpoints (per-email cap, `Idempotency-Key`), admin `source` filter | api | Playwright + Jest green, coverage still 100% |
 | 2b ✅ | Admin UI: "Booked by AI assistant" label, filter, detail row, day-view count | web | Playwright UI green |
 | 3 ✅ | Agent core: booking rules prompt (today's date in UTC+7 injected), topic guard, `checkAvailability` + `proposeBooking` tools, tool loop | agent | Deterministic tests with a scripted fake `LlmProvider` |
-| 4 ✅ | Confirm-gate + draft token + `findAlternatives` + `POST /chat` + rate limits + failure mapping (§13) | agent | Every §13.2 row and §14.2 threat tested |
+| 4 ✅ | Confirm-gate + draft token + `findAlternatives` + `POST /agents/users/chats` + rate limits + failure mapping (§13) | agent | Every §13.2 row and §14.2 threat tested |
 | 5 ✅ | End-to-end E1–E3 with the real model (§14.4, max 5 calls) | agent | All pass, cost recorded |
 | 6 | Chat screen in the PWA (D4) | web | Playwright UI tests with the agent mocked |
 
