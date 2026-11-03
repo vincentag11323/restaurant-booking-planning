@@ -311,3 +311,64 @@ Lessons about how to work with this user and project.
 - If a test fails on mobile only, it's a real bug; prioritize it
 
 **Session:** [[Session Log/2026-11-03#Build Phase]]
+
+---
+
+## 18. Embedded Single-Connection DBs Cannot Reproduce Concurrency Races
+
+**Rule:** PGlite (single in-process connection) serializes all queries. If a fix targets a concurrency race, reason about it plainly and note that the test cannot reproduce it.
+
+**Why:**
+- PGlite runs in the Node process, serves one connection at a time
+- Real Postgres with multiple concurrent clients can hit races (e.g., reschedule vs. cancel)
+- A regression test passes even before the fix because the race never executes
+- Claiming "test passes" implies coverage; being honest preserves credibility
+
+**How to apply:**
+- When fixing a race condition (row locks, transaction isolation): explain the fix (claimConfirmed() conditional UPDATE inside transaction)
+- Explicitly say "PGlite serializes; test cannot reproduce race; fix is reasoned from concurrency rules"
+- Mark such fixes as unverified-by-concurrent-test in commit messages or code review
+- If possible, note where the race *would* happen on real Postgres (reschedule UPDATE before acquiring lock on CONFIRMED row)
+
+**Session:** [[Session Log/2026-11-03#Review Round and Finish]]
+
+---
+
+## 19. Review Agents Can Overstate Severity; Verify Against Actual Backend Behavior
+
+**Rule:** Code review agents may flag findings as CRITICAL that don't match the actual system behavior. Verify each rating.
+
+**Why:**
+- Agent flagged "concurrent refresh logs user out" as CRITICAL
+- Actual behavior: backend refresh tokens are stateless JWTs; both concurrent refreshes succeed
+- Refresh was already de-duplicated (shared in-flight promise); no logout
+- False CRITICAL causes unnecessary thrashing
+
+**How to apply:**
+- When an agent flags CRITICAL/HIGH: stop and verify the backend behavior
+- Ask "does this actually break the user's session / cause data loss / allow injection?"
+- Check token handling (JWT stateless vs. session-based), race conditions (deduplicated promises?), error paths
+- Downgrade findings if the behavior doesn't match the severity claim
+- Trust reviewer reasoning, but verify impact independently
+
+**Session:** [[Session Log/2026-11-03#Review Round and Finish]]
+
+---
+
+## 20. Any Effect that Refetches on Changing Inputs Needs a Stale-Response Guard
+
+**Rule:** React effects that refetch data when inputs change must guard against stale responses overwriting newer results.
+
+**Why:**
+- User changes filter; old request completes after new request
+- Older response (slower, stale data) overwrites newer response in state
+- Observed in admin log, admin day view, menu when filters/tabs changed quickly
+
+**How to apply:**
+- Add a "current" guard: track the current request ID / timestamp
+- In the effect callback, compare the response ID to the current ID before setState
+- Or use AbortController to cancel previous requests
+- Pattern: `useEffect(() => { let current = true; fetch(...).then(data => { if (current) setState(data); }); return () => { current = false; }; }, [filter])`
+- Test with slow network (throttle in DevTools) and rapid filter changes
+
+**Session:** [[Session Log/2026-11-03#Review Round and Finish]]
