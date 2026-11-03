@@ -15,6 +15,7 @@ Read in this order. Every v1 code change must trace back to one of these docs (s
 | 8 | [security_spec.md](security_spec.md) | Auth, RBAC, encryption, compliance | ✅ |
 | 9 | [audit_trail.md](audit_trail.md) | Audit log format, retention, alerts | ✅ |
 | 10 | [testing_plan.md](testing_plan.md) | Unit / API / UI / security / performance testing | ✅ |
+| 11 | [agent_spec.md](agent_spec.md) | Booking assistant (AI agent) repo: scope, guardrails, Mastra vs LangGraph, open decisions | 📝 Plan, awaiting approval |
 | — | [../AGENTS_TO_BE_USED.md](../AGENTS_TO_BE_USED.md) | Agent skills and when to use them | ✅ |
 
 **Reference only (Bahasa, hospital template):** `alur_kerja_workflow.md`, `sistem_audit_audit_trail.md`, `spesifikasi_keamanan_security.md`, `rencana_pengujian_testing.md`.
