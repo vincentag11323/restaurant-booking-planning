@@ -83,6 +83,16 @@ Errors keep the chat shape so the chat screen can always show them: `{ reply }` 
 
 **Interactive docs (owner request 2026-11-04):** the agent server is an API too, so it publishes the same kind of docs as the booking API (`API_SPEC.md` §7a): `GET /agents/public/docs` (Swagger UI via `swagger-ui-express`) and `GET /agents/public/docs/openapi.json` (OpenAPI 3.1 built with `@asteasolutions/zod-to-openapi` from the Zod schema that validates `POST /agents/users/chats`). Every route has a plain-language summary and description, examples of each reply kind (a normal reply, a read-back with `pendingBooking`, a confirmed `booking`, a rate-limit reply), and every error. Shown in development and tests; in production only when `API_DOCS=true`. Same drift-guard test.
 
+**Rate limits (owner rule 2026-11-04: every API has one; decided now, built later):**
+
+| Route | Limit | Counted per |
+|---|---|---|
+| `/agents/public/*` (health, docs) | **60 requests / minute** (new) | IP address |
+| `POST /agents/users/chats` | **10 messages / minute** and **3 confirmations / hour** (unchanged) | IP address |
+| `POST /agents/users/chats` | **30 messages / 30 minutes** (unchanged) | guest email |
+
+Over a limit the reply is `429 { reply }` with a sentence for the guest, as today.
+
 ### 4.2 Tools the model can call (and nothing else)
 | Tool | Input (Zod) | Calls |
 |---|---|---|

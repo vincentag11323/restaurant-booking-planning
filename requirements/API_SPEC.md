@@ -132,6 +132,21 @@ Side effects: `GET /admins/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`
 | GET | `/public/health` | `200 { status: "ok" }` |
 | * | unknown route | `404 { message: "Route not found" }` |
 
+## 7b. Rate limits for every route group
+**Owner rule 2026-11-04: every API has a rate limit. Decided now, built later** (only `/api/auth/*` and the assistant lookup are limited today).
+
+| Group | Limit | Counted per | Why this number |
+|---|---|---|---|
+| `/api/public/*` | **300 requests / minute** | IP address | Menus and free sittings are read a lot, and the assistant's server (one IP) checks availability for every guest it serves (up to 6 lookups per chat turn). Health and docs share this limit |
+| `/api/auth/*` | **20 requests / 15 minutes** (unchanged) | IP address | Slows password guessing; bcrypt makes sign-in costly (~10 sign-ins/s) |
+| `/api/users/*` | **120 requests / minute**, and **30 changes / hour** (POST, PATCH, DELETE on reservations and profile) | signed-in user | A guest browsing never comes close; the change limit stops scripted booking churn |
+| `/api/admins/*` | **120 requests / minute**, and **10 exports / hour** | signed-in admin | Paging and filtering the log is fast; exports read up to 10,000 rows |
+| `/api/agents/*` | `guests/lookup`: **60 / minute** (unchanged); `reservations`: **30 / minute** | API key | A backstop: the assistant's own limits (3 confirmations / hour per guest IP) are tighter |
+
+* Over the limit: `429 { "message": "Too many requests. Please wait a minute and try again." }` (auth keeps its own message), with the standard `RateLimit` and `Retry-After` headers. Each 429 is a line in `logs/errors.log` (§8.2).
+* Counters live in the API process's memory (`express-rate-limit`). Running more than one API instance later needs a shared store (e.g. Redis); not now.
+* Test runs raise the limits through environment variables, the way `AUTH_RATE_LIMIT` works today; production uses the numbers above.
+
 ## 7a. Interactive API docs (Swagger / OpenAPI)
 **Owner request 2026-11-04.** The API publishes an **OpenAPI 3.1** document and a **Swagger UI** page, written for people, not only machines.
 
