@@ -138,3 +138,106 @@ Ran the real web app, API and agent together on the dev database, attacking them
 * Rows it left in the dev DB: two assistant bookings (RSV-B6LTJ8, RSV-YPS4PV) for two `sec-…@example.com` guest accounts, their audit rows, and one expired admin session (cleared at the next admin sign-in). Throwaway users and keys were deleted.
 
 Related: [[OPEN_QUESTIONS]], [[TEST_RUNBOOK]], [[DECISIONS]].
+
+---
+
+## Where things stand (end of 2026-11-04 testing)
+
+**All testing is done.**
+
+| Repo | Build | Tests | Review | Security |
+|---|---|---|---|---|
+| api | done | Jest 130 passed, 1 skipped (100% coverage); Playwright 70 passed | passed | passed (OWASP Top 10 + API Top 10; SQL injection S18 on PGlite and real PostgreSQL 17) |
+| web | done | 61 passed | passed | 1 Medium (§1) + Lows |
+| agent | done | 75 passed | passed | 2 Mediums (§2, §3) + Lows; OWASP LLM Top 10 passed |
+| e2e | done | real stack: 67 passed (+ 20 on Safari/Firefox) | passed | — |
+| whole stack | — | — | — | cross-stack session + API key + middleware test: all passed |
+
+**Not pushed yet:** e2e results (`cd1e6ab`) and the docs commits in the planning repo since `cb577d2`.
+
+**Nothing has been fixed yet.** The owner asked to stop here and decide first.
+
+## Decisions waiting for the owner
+1. **Dev database:** switch the dev DB (5432) from PGlite to real PostgreSQL 17 (already installed via Homebrew), or keep PGlite as "the real local dev DB".
+2. **Booking cap (§5):** cap upcoming bookings per guest, build the planned rate limits (API_SPEC §7b), or both.
+3. **Fix round:** fix the four Mediums (§1 web link encoding, §2 assistant double booking, §3 assistant "Nothing was booked" reply, §4 email in the error log) and the Lows, then rerun the affected tests and push.
+4. The four smaller decisions under "Owner decisions still open" above (assistant docs default, `TRUST_PROXY`, limit-reply wording, web security headers at hosting).
+
+## Also planned (already decided, not started)
+* Convert the security scratch scripts into saved tests in `resortos-booking-e2e/tests/security/` with `npm run test:security` ([[TEST_RUNBOOK]]).
+* "Never mock": move web, agent and api tests onto the real local stack and real AI model (RULES.md).
+* Rate limits for every route group (API_SPEC §7b, AGENT_SPEC §4.1).
+
+---
+
+## PLAN (not built): one success log + one error log line for every DB change, in every API and agent endpoint
+
+**Owner request, 2026-11-04.** Plan only; no code yet.
+
+### The rule (for every endpoint that exists now or is created later, in the booking API and the agent)
+Every request that creates, updates or deletes data writes **exactly one** short line:
+* **Success** → `console.log` + the rotated **success log** (`logs/app.log`).
+* **Failure** → `console.error` + the rotated **error log** (`logs/errors.log`).
+
+Each line says, briefly: **which method, which route, what changed (or what was being changed), and the result or the error.** One line, no stack traces, no personal data, no secrets.
+
+```
+[POST] /api/users/reservations 201 RESERVATION_CREATED RSV-7K3Q9X user=cmw0h1… ip=::1
+[PATCH] /api/users/reservations/cmw1… 200 RESERVATION_RESCHEDULED RSV-7K3Q9X user=cmw0h1…
+[DELETE] /api/users/reservations/cmw1… 200 RESERVATION_CANCELLED RSV-7K3Q9X user=cmw0h1…
+[POST] /api/users/reservations 400 RESERVATION_CREATE_FAILED "Not enough tables for this party" user=cmw0h1…
+[POST] /agents/users/chats 201 BOOKING_CONFIRMED RSV-959ZFU (via /api/agents/reservations)
+[POST] /agents/users/chats 502 BOOKING_FAILED "Booking API unreachable"
+```
+(The files keep the JSON-line format already in API_SPEC §8 after the tag; the examples above show the content in short form.)
+
+### What already exists vs what's missing
+| Part | Booking API | Agent |
+|---|---|---|
+| Success log with `[METHOD]` tag, route, action, id | **Done** (`src/lib/logs.ts` `logChange`; called in auth, profile, reservations, agent routes) | **Missing**: only plain `console.info` lines, no log files |
+| Error log with `[METHOD]` tag, route, brief message | **Done** for every failed request (`logFailure`) | **Missing**: no error log file |
+| Failure line says **what** was being changed | **Missing**: error lines have the message but no `action` (e.g. `RESERVATION_CREATE_FAILED`) | Missing |
+| Rotation: 5 MB, one old copy | Done for both files | Missing |
+| A test that fails if a new write route forgets to log | **Missing** | Missing |
+
+### Steps (Plan → Build → Review → Test, per RULES.md)
+1. **Spec first** (`requirements/API_SPEC.md` §8, `AGENT_SPEC.md` §4.1, `CODING_STANDARDS_BACKEND.md` §5): write the rule above as a must for every current and future endpoint; add `*_FAILED` actions (`RESERVATION_CREATE_FAILED`, `RESERVATION_RESCHEDULE_FAILED`, `RESERVATION_CANCEL_FAILED`, `PROFILE_UPDATE_FAILED`, `USER_CREATE_FAILED`, `SESSION_CREATE_FAILED` (bad sign-in), `BOOKING_FAILED` …) and the agent's actions (`BOOKING_CONFIRMED`, `BOOKING_FAILED`, `GUEST_ACCOUNT_CREATED` as reported by the API).
+2. **Booking API:** failure lines on write routes carry the `action` (`*_FAILED`) next to the existing message. One small helper per route so it can't be forgotten.
+3. **Agent:** reuse the API's log writer design (same `[METHOD]` tag, same rotation, `APP_LOG_PATH` / `ERROR_LOG_PATH` / `*_MAX_BYTES` / `*_CONSOLE` env vars): `logs/app.log` + `logs/errors.log`. `POST /agents/users/chats` logs a success line only when a booking was made (with the reservation code), and an error line for every failed turn (status + brief reason). Plain chat turns that change nothing log no success line. Chat text, emails and phones are never logged.
+4. **Guard test in both repos** ("every write route logs"): walk every mounted non-GET route and assert a success line on a successful call and an error line with an `action` on a failing call. A new endpoint without logging fails this test.
+5. **Docs:** `docs/API.md` (API) and the agent README / Swagger descriptions say which action each endpoint logs.
+
+### "Tell antislop to add this rule"
+`antislop` is a third-party skill from a plugin; its files aren't part of this project and would be overwritten on update. So the rule goes where every agent here must follow it: `RULES.md` §4, `CODING_STANDARDS_BACKEND.md` §5, and the Review checklist (a reviewer fails any new write endpoint without its two log lines). The antislop rules on concise, plain wording apply to the log messages themselves. If you want it inside the antislop skill too, that's a change to the plugin or a project-level skill override; say which.
+
+### Open point 1: PUT or PATCH? (assessment)
+**What they mean (HTTP standard):**
+* **PUT** = *replace the whole thing.* The client sends the complete record; anything it leaves out is wiped or reset. Sending the same PUT twice gives the same result.
+* **PATCH** = *change some fields.* The client sends only what changes; everything else stays as it is.
+
+**Our two update endpoints:**
+| Endpoint | What the client sends | Fits |
+|---|---|---|
+| `/api/users/me` (profile) | any of `name`, `phone`, `allergies` (all optional, API_SPEC §2) | **PATCH**: only the sent fields change; email, role and password are never part of it |
+| `/api/users/reservations/:id` (reschedule) | `date`, `startTime`, optional `partySize` | **PATCH**: it moves the booking and re-assigns tables; branch, sector, code, special requests and status stay. A PUT would mean "send the whole booking", which the guest can't and shouldn't (no tables, code or status from the client) |
+
+**Recommendation: keep PATCH**, and tag log lines with the **real** method (`[PATCH]`).
+* The tag then matches the route in Swagger, the code and any proxy or hosting access log, so a line can be traced straight back to its endpoint.
+* Switching to PUT would be wrong by the standard (partial updates) and would change the API contract the web app, the e2e tests and the docs use.
+* Labelling PATCH lines as `[PUT]` would make the logs disagree with every other record of the request.
+* Only choose PUT for a future endpoint that really replaces a whole record (e.g. "replace all my allergy tags" as its own resource). The coding standard already says `PATCH` updates part of a record.
+
+**Owner to confirm:** keep PATCH (recommended) or change.
+
+### Open point 2: failed sign-ins (owner note, 2026-11-04: just noted, not decided in detail)
+**Owner wants:** log how many times sign-in has failed.
+
+**What exists today:**
+* Every failed sign-in is a `401` line in `logs/errors.log` (no count).
+* Every failure writes a `LOGIN_FAILED` audit row, and 10 failures from one IP in 5 minutes write one `SECURITY_ALERT` (scenario A12).
+
+**Note for later planning:**
+* The failed sign-in error line would carry the action `SESSION_CREATE_FAILED` and a running count, e.g. `failures=3`.
+* Count per IP, and per account when the email belongs to a real account (by user id, never the email, since emails must not be logged).
+* Use the same time window as the alert (5 minutes) or the auth rate limit (15 minutes); to decide.
+* Read the count from the existing `LOGIN_FAILED` audit rows, so no new storage is needed.
