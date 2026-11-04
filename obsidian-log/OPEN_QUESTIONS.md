@@ -153,3 +153,19 @@ Docs live in root repo, shared reference for backend and frontend.
 
 **Date:** 2026-11-04  
 **Session:** [[SESSION_LOG/2026_11_04]]
+
+---
+
+## Open work after the 2026-11-04 session (sessions, ApiKey, route groups, logs, Swagger)
+
+**State:** all four repos built and pushed. Verified by the orchestrator: api Jest 130 passed / 1 skipped, 100% coverage; web 61 passed; agent 75 passed; e2e typecheck clean. api functional test, api code review, api security (OWASP Top 10 + API Top 10, S18 SQL injection on PGlite and PostgreSQL: pass), web review and web security done. **Not finished:** the full real-stack e2e run, the agent's code review and the agent's security pass (incl. OWASP LLM Top 10) — all three were cut off by the usage limit.
+
+**Confirmed findings, not fixed yet:**
+* api **Medium**: client errors return 500 — impossible dates pass the shape-only `dateString` check (`src/lib/validate.ts:16`), and `src/middleware/error.ts` ignores 413/415/URIError status. Fix: real calendar-date check; send the error's own 4xx status.
+* api **Medium**: Prisma error stacks put query values (e.g. an email) into `errors.log` (`src/lib/logs.ts`), breaking API_SPEC §8.3. Fix: log name/code only for Prisma errors.
+* api **Medium**: no cap on bookings per guest account and no `/api/users` rate limit (§7b planned). Owner to decide: build §7b now and/or cap upcoming bookings per guest.
+* api Low: `%` and `_` in the admin `q` search act as wildcards; `notify.ts` prints the guest's email to the console; rename `RATE_LIMIT_ERROR` → `AUTH_RATE_LIMIT_ERROR`.
+* web **Medium**: booking id from the URL goes into the API path unencoded (`src/backendApi/reservations.ts:9`), so a crafted link can make a signed-in browser call another `/api` path. Fix: `encodeURIComponent` every path segment.
+* web Low: build query strings with `URLSearchParams`; proxy keys `^/api/` and `^/agents/`; show an error when sign-out fails instead of signing out locally; tests for "401 not retried" and "logout sent first"; document `VITE_AGENT_URL` (an origin); `UpdateMeInput` fields optional.
+* Deployment: CSP / frame-ancestors header for the web app at the host.
+* Next task already decided (RULES.md "Never mock"): convert mocked suites to the real local stack (dev DB on 5432, real AI model everywhere). Planned: rate limits for every group (API_SPEC §7b, AGENT_SPEC §4.1); permission strings (`guest:read_one`) camelCase or not.
