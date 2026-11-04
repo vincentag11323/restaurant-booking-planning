@@ -13,6 +13,7 @@ Claude's running log, learnings, and decisions for the ResortOS restaurant booki
 - [[LEARNINGS]] — Lessons about this project and user
 - [[DECISIONS]] — Architecture and tool choices
 - [[OPEN_QUESTIONS]] — Unresolved items blocking progress
+- [[TEST_RUNBOOK]] — Every test as a rerunnable command, per repo, with ports
 
 ## Quick Facts
 - **Project:** Restaurant reservation booking system (TypeScript full-stack)
