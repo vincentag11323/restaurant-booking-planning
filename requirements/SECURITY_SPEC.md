@@ -34,6 +34,13 @@ The app stores guest personal data (name, email, phone number, allergy informati
 ## 3. Application Hardening
 * All request bodies and query strings are validated with **Zod** schemas.
 * All DB access goes through **Prisma** (parameterized queries, no raw string SQL).
+* **SQL injection: zero tolerance (owner rule, 2026-11-04).**
+  * Banned in app code: `$queryRawUnsafe`, `$executeRawUnsafe`, `Prisma.raw`, and building any SQL text from strings (`+`, `${}` inside a plain string, `.join`).
+  * Hand-written SQL is allowed only as Prisma's tagged template (`` prisma.$queryRaw`... ${value}` ``), where every value becomes a bound parameter, and only where Prisma's normal methods can't do it (today: one `SELECT ... FOR UPDATE` row lock in `src/routes/agent.ts`). Each one is listed in the review with its reason.
+  * Table, column and sort names never come from the request; any choice the user makes (sort, filter field, format) is picked from a fixed list by a Zod `enum` first.
+  * Search text (the admin `q` box) is passed to Prisma `contains` / `equals` as a value, never pasted into SQL.
+  * Every input is validated by Zod before it reaches the database (type, length, format).
+  * A permanent test (S18) sends SQL injection payloads into every input and must see only normal responses.
 * `helmet` security headers. CORS restricted to the configured frontend origin.
 * React escapes all rendered output by default, and the app never uses `dangerouslySetInnerHTML`.
 

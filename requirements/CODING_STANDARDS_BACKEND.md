@@ -31,7 +31,7 @@ The agent repo keeps the same idea: `src/booking/` (calls to the booking API and
 
 ## 4. Input, database, security
 * Validate every body and query with a **Zod** schema before use.
-* All database access through **Prisma**. No raw SQL strings in app code (hand-written SQL only in migrations).
+* All database access through **Prisma**. **SQL injection is zero tolerance** (`SECURITY_SPEC.md` §3): never `$queryRawUnsafe`, `$executeRawUnsafe` or `Prisma.raw`, never SQL built from strings; hand-written SQL only in migrations, or as Prisma's tagged `$queryRaw` template with bound values when Prisma can't do it otherwise (comment why). Sort and field names come from a Zod `enum`, never from the request.
 * Never pass a possibly-`undefined` value into a Prisma `where` on `delete` / `update` (it matches every row).
 * Multi-step writes that must succeed or fail together go in one transaction.
 * Secrets (passwords, session tokens, API keys) are stored only as hashes and never logged, returned or put in an LLM prompt.
