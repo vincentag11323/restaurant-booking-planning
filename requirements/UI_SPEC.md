@@ -28,7 +28,7 @@ Any route the role can't access redirects (USER → `/`, ADMIN → `/admin`, gue
 * Fetch wrapper: sends the HttpOnly session cookie (`credentials: "include"`). On a `401` outside `/api/auth/*` it signs the guest out locally and goes to sign-in. No refresh, no retry, no idle timer.
 * On page load the session context calls `GET /api/users/me`; a `401` means signed out. Screens keep the data they already show until the next server call.
 * No global state library. Use React context for auth and local component state for everything else.
-* Dev: Vite proxies `/api` to `http://localhost:4000` and `/agent` to `http://localhost:4300` (both same-origin). Prod: `VITE_API_URL`, `VITE_AGENT_URL`.
+* Dev: Vite proxies `/api` to `http://localhost:4000` and `/agents` to `http://localhost:4300` (both same-origin, no path rewrite). Prod: `VITE_API_URL`, `VITE_AGENT_URL`.
 
 ## 3. PWA
 
