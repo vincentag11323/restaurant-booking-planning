@@ -14,6 +14,7 @@ Claude's running log, learnings, and decisions for the ResortOS restaurant booki
 - [[DECISIONS]] — Architecture and tool choices
 - [[OPEN_QUESTIONS]] — Unresolved items blocking progress
 - [[TEST_RUNBOOK]] — Every test as a rerunnable command, per repo, with ports
+- [[SECURITY_FINDINGS_2026_11_04]] — Security findings of the 2026-11-04 round, in plain words
 
 ## Quick Facts
 - **Project:** Restaurant reservation booking system (TypeScript full-stack)

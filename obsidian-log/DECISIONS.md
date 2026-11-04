@@ -419,3 +419,9 @@ AGENT gets 403 everywhere else. Listing/searching guests stays admin-only.
 
 **Date:** 2026-11-04  
 **Session:** [[SESSION_LOG/2026_11_04#Video Files Gitignored + History Audit]]
+
+---
+
+## API 500 on Bad Input: Ignored
+
+**Decision (owner, 2026-11-04):** the API (and the assistant) answering `500` instead of `400`/`413` for impossible dates, oversized bodies or garbled URLs is accepted and not fixed. No data is exposed; only the status code is wrong. See [[SECURITY_FINDINGS_2026_11_04]].
