@@ -24,6 +24,8 @@ Both repositories use **Playwright** (`@playwright/test`) for behaviour tests. T
 * **Authorization Testing (IDOR):** Ensure Insecure Direct Object Reference is impossible. Example: Guest A changing `/api/users/reservations/<A's id>` to `<B's id>` must get `404`. Covered by an automated API test.
 * **Vulnerability Scanning:** Run `npm audit` in CI on both repos, and enable Dependabot alerts for known CVEs.
 * **Penetration Testing:** A lightweight third-party or OWASP ZAP scan before the first public launch.
+* **OWASP checklists on every change (owner rule, 2026-11-04):** the Review and Test stages check the OWASP Top 10 (2021) for all repos, the OWASP API Security Top 10 (2023) for the booking API and the agent, and the OWASP Top 10 for LLM Applications (2025) for the agent, item by item with evidence (`RULES.md`, "Models and security checks").
+* **Automated scanners (to install):** OWASP ZAP baseline scan against the local test stack, and Semgrep with its OWASP Top 10 and TypeScript rules on every repo. Not installed yet (no Docker, ZAP or Semgrep on the build machine), so they're reported as "not run" until then.
 
 ## 3. Performance Testing
 * **Concurrency Testing:** Fire many simultaneous bookings at the same slot and assert that no table is ever double-booked. A DB unique constraint on (table, slot) guarantees this.
