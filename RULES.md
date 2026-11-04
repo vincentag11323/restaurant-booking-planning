@@ -24,7 +24,7 @@ Each stage follows its ECC step: **plan → tdd → code review → verify**.
 | 4 | **Test** | `general-purpose`, Sonnet | Runs every suite (API Jest + Playwright, web, agent, the full e2e stack), then probes security (auth bypass, CSRF, expired or forged sessions, key leaks, injection), vulnerabilities (`npm audit`) and usability (what the user sees when a session ends, error messages). Adds a test only where a spec rule has none | Fix app code (failures go back to stage 2) |
 
 ### Stages 3 and 4 run per repo, in parallel (owner rule, 2026-11-03)
-Stages 1 and 2 stay sequential. For Review and Test, the orchestrator launches **one agent per changed repo, all at the same time**, then waits for all of them before moving on:
+Stage 1 stays sequential. **Stage 2 (Build) may run one agent per repo in parallel** (owner rule, 2026-11-04) when the plan gives each repo its own changes; an agent edits only its own repo, and cross-repo checks (the e2e full stack) wait until every Build agent has finished. For Review and Test, the orchestrator launches **one agent per changed repo, all at the same time**, then waits for all of them before moving on:
 
 | Repo | Review agent (stage 3) covers | Test agent (stage 4) runs |
 |---|---|---|
