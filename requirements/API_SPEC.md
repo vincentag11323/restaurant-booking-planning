@@ -152,7 +152,7 @@ Side effects: `GET /admins/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`
 
 | Method | Path | Success |
 |---|---|---|
-| GET | `/public/docs` | `200` the Swagger UI page (try every endpoint from the browser) |
+| GET | `/public/docs` | `301` to `/public/docs/` (Swagger UI loads its files with relative URLs), which returns `200` the Swagger UI page (try every endpoint from the browser) |
 | GET | `/public/docs/openapi.json` | `200` the OpenAPI 3.1 document (JSON) |
 
 * **Framework:** `swagger-ui-express` serves the page; `@asteasolutions/zod-to-openapi` builds the document **from the same Zod schemas that validate requests**, so the docs can't drift from the real rules. No hand-written YAML.
