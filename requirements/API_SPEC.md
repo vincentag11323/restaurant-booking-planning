@@ -159,7 +159,7 @@ Side effects: `GET /admins/reservations/:id` → audit `VIEW_RESERVATION_DETAIL`
 * **Human-readable:** every endpoint has a one-line `summary` and a plain-language `description` (who may call it, what it does, side effects such as audit rows or log lines), a tag per route group (`Public`, `Auth`, `Users`, `Admins`, `Agents`), an example request and response, and every error response with its exact `message` from this spec. The document's top `description` explains sign-in (session cookie), the assistant key, the route groups and the error shape in a few short paragraphs.
 * **Security schemes:** `sessionCookie` (`apiKey` in cookie `session`) for `/users/*` and `/admins/*`; `agentKey` (`apiKey` in header `X-Agent-Key`) for `/agents/*`; none for `/public/*` and `/auth/*`.
 * **Where it's shown:** under `/api/public` (no auth middleware), in development and tests always; in production only when `API_DOCS=true` (default off, so the route list isn't advertised).
-* **Security headers:** the strict `helmet` content-security policy stays on every route except the docs page, which gets only what Swagger UI needs.
+* **Security headers:** the docs page keeps the same strict `helmet` content-security policy as every other route; Swagger UI works under it (its scripts load from the same origin, and its one inline style is allowed). A docs-only policy is added only if a future Swagger UI version needs it.
 * **Drift guard (test):** every route the app mounts appears in the OpenAPI document with the same method and path, and every documented path is mounted.
 
 ## 8. Logging: one success log, one error log
