@@ -161,13 +161,13 @@ Three roles. Every route checks a **permission**, and roles map to permissions i
 | List / search guests or bookings ("everyone booked tonight") | | ✅ | ❌ |
 | Public: availability, menu | ✅ | ✅ | ✅ |
 
-* **Everything else is `403` for `AGENT`**: no reading or changing reservations, no admin routes, no profile, no listing or searching users. A test calls every other route with an agent token and expects `403`.
-* **API key (approved 2026-11-03):** the seed creates the service account (`assistant@resortos.internal`, role `AGENT`, no password) and stores the SHA-256 of `AGENT_API_KEY`. The agent sends `X-Agent-Key: <AGENT_API_KEY>` on every call; no sign-in, no expiry. Rotate by changing the key in both `.env` files and re-running the seed. The account can't sign in, can't be created by sign-up and has no "My bookings".
+* **Everything else is closed to `AGENT`**: no reading or changing reservations, no admin routes, no profile, no listing or searching users. `/api/users/*` and `/api/admins/*` read only the session cookie, so the agent's key there gets `401 Authentication required` (API_SPEC, "Route groups"); tests S4 and the cross-stack security test prove it.
+* **API key (approved 2026-11-03):** the seed creates the service account (`assistant@resortos.internal`, role `AGENT`, no password) and stores the SHA-256 of `AGENT_API_KEY`. The agent sends `X-Agent-Key: <AGENT_API_KEY>` only on its `/api/agents/*` calls (availability is public and goes without it); no sign-in, no expiry. Rotate by changing the key in both `.env` files and re-running the seed. The account can't sign in, can't be created by sign-up and has no "My bookings".
 * Routes check permissions, not how the caller authenticated.
 * **One user at a time, never more (owner rule, 2026-11-03):**
   * Exact match only. The email is validated as an email and compared exactly (case-insensitive): no wildcards, prefixes or partial matches, and one email per request.
   * Minimal answer: `{ exists, upcomingAssistantBookings }`. No name, phone, booking details or IDs, because the email in a chat is **unverified** and whatever the agent reads can end up in the reply to whoever typed it.
-  * No list, search, date or "tonight" queries exist for `AGENT`. Requests like "list everyone booked tonight" hit `notSupportedYet` in the agent and `403` in the API. Listing and searching stay **admin-only**.
+  * No list, search, date or "tonight" queries exist for `AGENT`. Requests like "list everyone booked tonight" hit `notSupportedYet` in the agent, and the API has no such route for the key. Listing and searching stay **admin-only**.
   * Every lookup is audited (`VIEW_GUEST`, actor = agent account) and rate-limited (60 / minute for the agent account) so enumeration attempts are visible and slow.
 
 ### 5.6 Privacy

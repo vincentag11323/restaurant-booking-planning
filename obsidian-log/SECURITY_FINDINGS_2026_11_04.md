@@ -123,7 +123,18 @@ But each one is a **different** "book only once" key. Someone sending the ticket
 * **Assistant limit replies** say whether an email has signed up ("sign in to manage them"), so anyone typing an email learns that. The wording is spec-approved; keep it?
 * **Web app security headers** (CSP, anti-framing) are set by the hosting, at deployment.
 
-## Still running
-* Cross-stack attack test of sessions + API key + middleware on the real dev database (Opus). Its findings will be added here.
+## Cross-stack test of sessions + API key + middleware (done)
+Ran the real web app, API and agent together on the dev database, attacking them from a real browser and with curl. **Everything passed:**
+* Sign-in cookie is HttpOnly, never visible to page scripts; only a SHA-256 of the token is in the database; sign-out kills a copied cookie at once (directly and through the web proxy); expiry works; a new token on every sign-in (no session fixation); tampered cookies all refused.
+* Every route group answered every credential combination exactly as API_SPEC says (7 routes × 12 credentials); a role change or a deleted user takes effect on the very next request.
+* The agent key went **only** to `/api/agents/*` (checked with a logging proxy between agent and API); a key owned by a non-agent account is refused; the key appears nowhere (logs, Swagger, replies, database apart from its hash); a prompt asking the assistant to reveal it was refused; a real chat booking was recorded as made by the assistant.
+* Cross-site requests (54 attempts) all blocked; SQL injection (132 requests) found nothing; logs hold ids only.
+
+**New items from it:**
+* **Decision: the "dev database" on 5432 is not real PostgreSQL.** It's PGlite (an in-browser-style Postgres) run by `npm run db:local`, where every connection shares one session. The RULES say tests use the real local dev DB; today that DB is PGlite. Real PostgreSQL 17 is installed on this Mac (Homebrew). Options: switch the dev DB to real PostgreSQL, or record that PGlite counts. (SQL injection S18 *was* also run on real PostgreSQL 17 by the API security agent and passed; race tests T2 need real Postgres.)
+* Low: guest emails printed by the notify stub (same as the API Low above).
+* Low: a cookie written as `session=j:{...}` gets "Authentication required" instead of "Invalid or expired token". Still refused, no bypass.
+* Fixed now: AGENT_SPEC §5.5 said the agent key gets 403 elsewhere and is sent on every call; it's 401 and only sent to `/api/agents/*`.
+* Rows it left in the dev DB: two assistant bookings (RSV-B6LTJ8, RSV-YPS4PV) for two `sec-…@example.com` guest accounts, their audit rows, and one expired admin session (cleared at the next admin sign-in). Throwaway users and keys were deleted.
 
 Related: [[OPEN_QUESTIONS]], [[TEST_RUNBOOK]], [[DECISIONS]].
